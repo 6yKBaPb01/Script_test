@@ -11,11 +11,6 @@ local Window = Rayfield:CreateWindow({
       FolderName = "99NightsHack",
       FileName = "Config.json"
    },
-   Discord = {
-      Enabled = false,
-      Invite = "noinvitelink",
-      RememberJoins = true
-   },
    KeySystem = false,
 })
 
