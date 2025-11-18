@@ -1,5 +1,7 @@
--- 99 NIGHTS ULTIMATE MEGA HACK by I.S.-1
--- ПОЛНЫЙ ФУНКЦИОНАЛ НА ВСЕ СЛУЧАИ ЖИЗНИ
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
 
 local UltimateHack = {}
 
