@@ -115,15 +115,71 @@ function findChild()
 end
 
 function teleportToFire()
-    local fire = findFire()
+    -- Ищем костер-спавн по разным возможным именам
+    local fire = nil
+    
+    -- Проверяем различные варианты названий спавна
+    local possibleNames = {
+        "Spawn", "Campfire", "Fire", "CampFire", "MainFire", 
+        "Base", "Start", "Home", "SpawnPoint"
+    }
+    
+    -- Сначала ищем в workspace
+    for _, name in pairs(possibleNames) do
+        fire = workspace:FindFirstChild(name)
+        if fire then break end
+    end
+    
+    -- Если не нашли, ищем среди всех потомков workspace
     if not fire then
-        Rayfield:Notify({Title = "❌ ОШИБКА", Content = "Костер не найден!", Duration = 4})
+        for _, obj in pairs(workspace:GetDescendants()) do
+            for _, name in pairs(possibleNames) do
+                if obj.Name:lower():find(name:lower()) then
+                    fire = obj
+                    break
+                end
+            end
+            if fire then break end
+        end
+    end
+    
+    -- Если все еще не нашли, ищем части с желтым/оранжевым цветом (типичный цвет костра)
+    if not fire then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("Part") then
+                if obj.BrickColor == BrickColor.new("Bright orange") or 
+                   obj.BrickColor == BrickColor.new("Bright yellow") or
+                   obj.BrickColor == BrickColor.new("Neon orange") then
+                    fire = obj
+                    break
+                end
+            end
+        end
+    end
+    
+    if not fire then
+        Rayfield:Notify({Title = "❌ ОШИБКА", Content = "Костер-спавн не найден!", Duration = 4})
         return false
     end
     
-    local targetPosition = fire:IsA("Model") and fire.PrimaryPart and fire.PrimaryPart.Position or fire.Position
+    -- Определяем позицию для телепорта
+    local targetPosition
+    if fire:IsA("Model") and fire.PrimaryPart then
+        targetPosition = fire.PrimaryPart.Position
+    elseif fire:IsA("Part") then
+        targetPosition = fire.Position
+    else
+        targetPosition = fire:GetPivot().Position
+    end
+    
+    -- Телепортируемся немного выше позиции костра
     Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 5, 0))
-    Rayfield:Notify({Title = "✅ УСПЕХ", Content = "Телепорт к костру!", Duration = 3})
+    
+    Rayfield:Notify({
+        Title = "✅ УСПЕХ", 
+        Content = "Телепорт к костру-спавну!",
+        Duration = 3
+    })
     return true
 end
 
