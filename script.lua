@@ -1,5 +1,3 @@
--- 99 ночей в лесу - ULTIMATE COMPLETE SCRIPT
--- ВСЕ ФУНКЦИИ: АВТОЭКСПЛОИТ, ПОЛЕТ, ТЕЛЕПОРТЫ, АВТОСБОР, АВТОСАЖАНИЕ, ТП ИГРОКОВ
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
