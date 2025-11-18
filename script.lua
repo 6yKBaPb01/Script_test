@@ -29,6 +29,7 @@ local AutoTab = Window:CreateTab("Автоматы", 4483362458)
 local ExploitTab = Window:CreateTab("Эксплойд", 4483362458)
 local CollectTab = Window:CreateTab("Сбор ресурсов", 4483362458)
 local OptimizationTab = Window:CreateTab("Оптимизация", 4483362458)
+local TeleportTab = Window:CreateTab("Телепортация", 4483362458)
 
 -- НАСТРОЙКИ
 UltimateHack.Settings = {
@@ -40,6 +41,7 @@ UltimateHack.Settings = {
     KillAuraRadius = 50,
     TreeAura = true,
     TreeAuraRadius = 30,
+    AutoFarmAura = false,
     
     -- АВТОМАТЫ
     AutoFish = true,
@@ -47,7 +49,7 @@ UltimateHack.Settings = {
     AutoLoot = true,
     AntiAFK = true,
     AutoFindChildren = true,
-    AutoCollectResources = false,
+    AutoCookFood = false,
     
     -- ЧИТЫ
     FlyHack = true,
@@ -55,21 +57,61 @@ UltimateHack.Settings = {
     GodMode = true,
     SpeedHack = false,
     SpeedMultiplier = 2,
+    InfiniteStamina = true,
+    NoHunger = true,
+    NoThirst = true,
     
     -- ЭКСПЛОЙД
     AutoExploit = true,
     ExploitRadius = 1000,
     ExploitSpeed = 50,
+    ExploitHeight = 100,
     
-    -- СБОР РЕСУРСОВ
-    CollectWood = true,
-    CollectMetal = true,
-    CollectFuel = true,
-    CollectTools = true,
-    CollectAmmo = true,
-    CollectMedkits = true,
-    CollectFood = true,
-    CollectPelf = true,
+    -- ОПТИМИЗАЦИЯ
+    AutoOptimize = false,
+}
+
+-- НАСТРОЙКИ СБОРА РЕСУРСОВ
+UltimateHack.CollectSettings = {
+    -- РЕСУРСЫ
+    Wood = true,
+    Metal = true,
+    Fuel = true,
+    Stone = true,
+    
+    -- ИНСТРУМЕНТЫ
+    Axes = true,
+    Rods = true,
+    Flutes = true,
+    Sacks = true,
+    Weapons = true,
+    
+    -- МЕДИЦИНА
+    Bandages = true,
+    Medkits = true,
+    Potions = true,
+    
+    -- БОЕПРИПАСЫ
+    Ammo = true,
+    Guns = true,
+    
+    -- ЕДА
+    Vegetables = true,
+    Meat = true,
+    Fish = true,
+    CookedFood = true,
+    Water = true,
+    
+    -- ПРОЧЕЕ
+    Pelts = true,
+    Gems = true,
+    Artifacts = true,
+    Currency = true,
+    Miscellaneous = true,
+    
+    -- АВТОСБОР
+    AutoCollect = false,
+    AutoCollectInterval = 5
 }
 
 UltimateHack.FirePosition = Vector3.new(0, 0, 0)
@@ -106,11 +148,69 @@ end
 
 function UltimateHack.Functions.Optimization.ToggleShadows()
     game:GetService("Lighting").GlobalShadows = not game:GetService("Lighting").GlobalShadows
+    Rayfield:Notify({
+        Title = "Оптимизация",
+        Content = "Тени: " .. (game:GetService("Lighting").GlobalShadows and "ВКЛ" or "ВЫКЛ"),
+        Duration = 3,
+        Image = 4483362458
+    })
 end
 
 function UltimateHack.Functions.Optimization.ToggleFog()
     local lighting = game:GetService("Lighting")
     lighting.FogEnd = lighting.FogEnd == 100000 and 1000 or 100000
+    Rayfield:Notify({
+        Title = "Оптимизация",
+        Content = "Туман: " .. (lighting.FogEnd == 1000 and "ВКЛ" or "ВЫКЛ"),
+        Duration = 3,
+        Image = 4483362458
+    })
+end
+
+function UltimateHack.Functions.Optimization.DisableParticles()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("Smoke") then
+            obj.Enabled = false
+        end
+    end
+    Rayfield:Notify({
+        Title = "Оптимизация",
+        Content = "Частицы отключены!",
+        Duration = 3,
+        Image = 4483362458
+    })
+end
+
+function UltimateHack.Functions.Optimization.EnableParticles()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") or obj:IsA("Fire") or obj:IsA("Smoke") then
+            obj.Enabled = true
+        end
+    end
+    Rayfield:Notify({
+        Title = "Оптимизация",
+        Content = "Частицы включены!",
+        Duration = 3,
+        Image = 4483362458
+    })
+end
+
+function UltimateHack.Functions.Optimization.ApplyMobileOptimization()
+    settings().Rendering.QualityLevel = 1
+    game:GetService("Lighting").GlobalShadows = false
+    game:GetService("Lighting").FogEnd = 100000
+    UltimateHack.Functions.Optimization.DisableParticles()
+    
+    if setfpscap then
+        setfpscap(30)
+    end
+    
+    Rayfield:Notify({
+        Title = "Оптимизация",
+        Content = "Мобильная оптимизация применена!",
+        Duration = 3,
+        Image = 4483362458
+    })
 end
 
 -- ТЕЛЕПОРТАЦИЯ
@@ -191,17 +291,41 @@ end
 
 function UltimateHack.Functions.Teleport.AllToFire()
     local localPlayer = game.Players.LocalPlayer
+    local teleportedCount = 0
+    
     for _, player in pairs(game.Players:GetPlayers()) do
         if player ~= localPlayer and player.Character then
             player.Character.HumanoidRootPart.CFrame = CFrame.new(UltimateHack.FirePosition)
+            teleportedCount = teleportedCount + 1
         end
     end
+    
     Rayfield:Notify({
         Title = "Телепортация",
-        Content = "Все игроки телепортированы к костру!",
+        Content = "Игроков телепортировано: " .. teleportedCount,
         Duration = 3,
         Image = 4483362458
     })
+end
+
+function UltimateHack.Functions.Teleport.ToSpawn()
+    local spawn = workspace:FindFirstChild("Spawn") or workspace:FindFirstChild("SpawnPoint")
+    if spawn then
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = spawn.CFrame
+        Rayfield:Notify({
+            Title = "Телепортация",
+            Content = "Телепорт на спавн выполнен!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    else
+        Rayfield:Notify({
+            Title = "Ошибка",
+            Content = "Спавн не найден!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
 end
 
 -- АУРЫ
@@ -214,14 +338,12 @@ function UltimateHack.Functions.Auras.KillAura()
         local character = player.Character
         
         if character then
-            -- УБИВАЕМ ВСЕХ ВРАГОВ (ВОЛКИ, МЕДВЕДИ, ИГРОКИ)
             for _, target in pairs(game.Players:GetPlayers()) do
                 if target ~= player and target.Character then
                     local targetChar = target.Character
                     local distance = (character.HumanoidRootPart.Position - targetChar.HumanoidRootPart.Position).Magnitude
                     
                     if distance < UltimateHack.Settings.KillAuraRadius then
-                        -- НЕ УБИВАЕМ ДЕТЕЙ!
                         if not (target:FindFirstChild("Status") and target.Status.Value == "Child") then
                             targetChar.Humanoid.Health = 0
                         end
@@ -229,7 +351,6 @@ function UltimateHack.Functions.Auras.KillAura()
                 end
             end
             
-            -- УБИВАЕМ NPC ВРАГОВ
             for _, npc in pairs(workspace:GetDescendants()) do
                 if npc:FindFirstChild("Humanoid") and (npc.Name:find("Wolf") or npc.Name:find("Bear") or npc.Name:find("Enemy")) then
                     local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
@@ -258,6 +379,13 @@ function UltimateHack.Functions.Auras.TreeAura()
     end
 end
 
+function UltimateHack.Functions.Auras.AutoFarm()
+    while UltimateHack.Settings.AutoFarmAura and UltimateHack.IsRunning do
+        wait(1)
+        UltimateHack.Functions.Collect.SelectedResources()
+    end
+end
+
 -- АВТОМАТЫ
 UltimateHack.Functions.Automation = {}
 
@@ -267,7 +395,10 @@ function UltimateHack.Functions.Automation.AutoFish()
         local fishingRod = game.Players.LocalPlayer.Backpack:FindFirstChild("FishingRod") or game.Players.LocalPlayer.Character:FindFirstChild("FishingRod")
         if fishingRod then
             pcall(function()
-                game:GetService("ReplicatedStorage"):FindFirstChild("FishingEvent"):FireServer("StartFishing")
+                local fishingEvent = game:GetService("ReplicatedStorage"):FindFirstChild("FishingEvent")
+                if fishingEvent then
+                    fishingEvent:FireServer("StartFishing")
+                end
             end)
         end
     end
@@ -276,14 +407,15 @@ end
 function UltimateHack.Functions.Automation.AutoPlant()
     while UltimateHack.Settings.AutoPlant and UltimateHack.IsRunning do
         wait(3)
-        
-        -- ЗАЩИТНАЯ СТЕНА ВОКРУГ КОСТРА
         for x = -20, 20, 4 do
             for z = -20, 20, 4 do
                 if x == -20 or x == 20 or z == -20 or z == 20 then
                     local plantPos = UltimateHack.FirePosition + Vector3.new(x, 0, z)
                     pcall(function()
-                        game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree"):FireServer(plantPos)
+                        local plantEvent = game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree")
+                        if plantEvent then
+                            plantEvent:FireServer(plantPos)
+                        end
                     end)
                 end
             end
@@ -296,7 +428,6 @@ function UltimateHack.Functions.Automation.AutoLoot()
         wait(4)
         local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
         
-        -- ЛУТАЕМ СУНДУКИ И РЕСУРСЫ
         for _, obj in pairs(workspace:GetDescendants()) do
             if (obj.Name:find("Chest") or obj.Name:find("Loot") or obj.Name:find("Resource")) and obj:IsA("BasePart") then
                 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
@@ -314,8 +445,6 @@ end
 function UltimateHack.Functions.Automation.FindChildren()
     while UltimateHack.Settings.AutoFindChildren and UltimateHack.IsRunning do
         wait(5)
-        
-        -- ПОИСК ВСЕХ 4 ДЕТЕЙ
         for _, player in pairs(game.Players:GetPlayers()) do
             for _, childName in pairs(UltimateHack.ChildrenNames) do
                 if player.Name:find(childName) or (player:FindFirstChild("DisplayName") and player.DisplayName:find(childName)) then
@@ -345,14 +474,18 @@ function UltimateHack.Functions.Automation.AntiAFK()
     end
 end
 
-function UltimateHack.Functions.Automation.AutoCollectResources()
-    while UltimateHack.Settings.AutoCollectResources and UltimateHack.IsRunning do
+function UltimateHack.Functions.Automation.AutoCookFood()
+    while UltimateHack.Settings.AutoCookFood and UltimateHack.IsRunning do
         wait(10)
-        UltimateHack.Functions.Collect.AllResources()
+        local fire = workspace:FindFirstChild("Fire") or workspace:FindFirstChild("Campfire")
+        if fire then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = fire.CFrame
+            wait(1)
+        end
     end
 end
 
--- ЧИТЫ ДЛЯ ИГРОКА
+-- ЧИТЫ
 UltimateHack.Functions.Cheats = {}
 
 function UltimateHack.Functions.Cheats.Fly()
@@ -431,7 +564,25 @@ function UltimateHack.Functions.Cheats.SetSpeed(speed)
     end
 end
 
--- ЭКСПЛОЙД КАРТЫ
+function UltimateHack.Functions.Cheats.InfiniteStamina()
+    while UltimateHack.Settings.InfiniteStamina and UltimateHack.IsRunning do
+        wait(1)
+    end
+end
+
+function UltimateHack.Functions.Cheats.NoHunger()
+    while UltimateHack.Settings.NoHunger and UltimateHack.IsRunning do
+        wait(5)
+    end
+end
+
+function UltimateHack.Functions.Cheats.NoThirst()
+    while UltimateHack.Settings.NoThirst and UltimateHack.IsRunning do
+        wait(5)
+    end
+end
+
+-- ЭКСПЛОЙД
 UltimateHack.Functions.AutoExploit = {}
 
 function UltimateHack.Functions.AutoExploit.StartSpiralExploit()
@@ -446,7 +597,7 @@ function UltimateHack.Functions.AutoExploit.StartSpiralExploit()
     local startPos = UltimateHack.FirePosition
     local radius = UltimateHack.Settings.ExploitRadius
     local speed = UltimateHack.Settings.ExploitSpeed
-    local maxHeight = 100
+    local maxHeight = UltimateHack.Settings.ExploitHeight
     
     local angle = 0
     local height = 0
@@ -463,7 +614,6 @@ function UltimateHack.Functions.AutoExploit.StartSpiralExploit()
         
         player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(x, y, z))
         
-        -- СКАНИРУЕМ И ЛУТАЕМ ВСЁ ВОКРУГ
         UltimateHack.Functions.AutoExploit.ScanArea(Vector3.new(x, y, z))
         
         angle = angle + (2 * math.pi / spiralSteps)
@@ -483,10 +633,8 @@ end
 
 function UltimateHack.Functions.AutoExploit.ScanArea(position)
     local scanRadius = 50
-    
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and (obj.Position - position).Magnitude < scanRadius then
-            -- ЛУТАЕМ РЕСУРСЫ И СУНДУКИ
             if obj.Name:find("Chest") or obj.Name:find("Loot") or obj.Name:find("Resource") then
                 firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
                 firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
@@ -495,13 +643,83 @@ function UltimateHack.Functions.AutoExploit.ScanArea(position)
     end
 end
 
--- СБОР РЕСУРСОВ (ПОЛНЫЙ КОМПЛЕКТ)
+-- СБОР РЕСУРСОВ
 UltimateHack.Functions.Collect = {}
 
-function UltimateHack.Functions.Collect.AllResources()
+function UltimateHack.Functions.Collect.GetResourcesByCategory(category)
+    local resources = {
+        Wood = {"Wood", "Log", "Plank", "Stick", "Tree"},
+        Metal = {"Metal", "Scrap", "Iron", "Steel", "Ore", "Canister", "Tire", "Microwave", "Bolt"},
+        Fuel = {"Fuel", "Coal", "Oil", "Gas", "Petrol"},
+        Stone = {"Stone", "Flint", "Rock"},
+        Axes = {"Axe", "Chainsaw"},
+        Rods = {"Rod"},
+        Flutes = {"Flute"},
+        Sacks = {"Sack"},
+        Weapons = {"Knife", "Sword", "Bow", "Arrow"},
+        Bandages = {"Bandage"},
+        Medkits = {"Medkit"},
+        Potions = {"Potion", "Heal"},
+        Ammo = {"Ammo", "Bullet"},
+        Guns = {"Gun", "Rifle", "Pistol", "Shotgun"},
+        Vegetables = {"Carrot", "Corn", "Pumpkin", "Apple", "Berry"},
+        Meat = {"Morsel", "Steak", "Ribs", "Meat"},
+        Fish = {"Mackerel", "Salmon", "Clownfish", "Jellyfish", "Char", "Eel", "Swordfish", "Shark", "Fish"},
+        CookedFood = {"Stew", "Cake", "Chili", "Bread"},
+        Water = {"Water", "Drink"},
+        Pelts = {"Pelt", "Fur", "Hide", "Leather", "Skin"},
+        Gems = {"Gem", "Crystal", "Diamond", "Ruby", "Emerald"},
+        Artifacts = {"Cultist", "Artifact", "Relic", "Treasure"},
+        Currency = {"Coin", "Money", "Gold", "Silver"},
+        Miscellaneous = {"Misc", "Item", "Object", "Thing"}
+    }
+    return resources[category] or {}
+end
+
+function UltimateHack.Functions.Collect.AutoCollectResources()
+    while UltimateHack.CollectSettings.AutoCollect and UltimateHack.IsRunning do
+        wait(UltimateHack.CollectSettings.AutoCollectInterval)
+        UltimateHack.Functions.Collect.SelectedResources()
+    end
+end
+
+function UltimateHack.Functions.Collect.SelectedResources()
+    local collectedCount = 0
+    local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+
+    for category, enabled in pairs(UltimateHack.CollectSettings) do
+        if enabled and category ~= "AutoCollect" and category ~= "AutoCollectInterval" then
+            local resources = UltimateHack.Functions.Collect.GetResourcesByCategory(category)
+            for _, resourceName in pairs(resources) do
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") and obj.Name:lower():find(resourceName:lower()) then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                        wait(0.02)
+                        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                        collectedCount = collectedCount + 1
+                    end
+                end
+            end
+        end
+    end
+
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+    
+    if collectedCount > 0 then
+        Rayfield:Notify({
+            Title = "Сбор завершен",
+            Content = "Собрано предметов: " .. collectedCount,
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+end
+
+function UltimateHack.Functions.Collect.Everything()
     Rayfield:Notify({
         Title = "Сбор ресурсов",
-        Content = "Начинаю сбор ВСЕХ ресурсов...",
+        Content = "Начинаю сбор ВСЕХ ресурсов!",
         Duration = 3,
         Image = 4483362458
     })
@@ -509,130 +727,51 @@ function UltimateHack.Functions.Collect.AllResources()
     local collectedCount = 0
     local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
 
-    -- ВСЕ КАТЕГОРИИ РЕСУРСОВ
     local allResources = {
-        -- ДЕРЕВО
-        "Wood", "Log", "Tree", "Stick", "Plank",
-        -- МЕТАЛЛ
+        "Wood", "Log", "Plank", "Stick", "Tree",
         "Metal", "Scrap", "Iron", "Steel", "Ore", "Canister", "Tire", "Microwave", "Bolt",
-        -- ТОПЛИВО
         "Fuel", "Coal", "Oil", "Gas", "Petrol",
-        -- ИНСТРУМЕНТЫ
-        "Axe", "Chainsaw", "Rod", "Flute", "Sack", "Tool", "Hammer", "Saw", "Pickaxe",
-        -- ПАТРОНЫ И ОРУЖИЕ
-        "Ammo", "Bullet", "Gun", "Rifle", "Pistol", "Shotgun", "Arrow", "Bow",
-        -- АПТЕЧКИ И МЕДИЦИНА
-        "Bandage", "Medkit", "Med", "Health", "Potion", "Heal",
-        -- ЕДА
-        "Carrot", "Corn", "Pumpkin", "Apple", "Berry", "Morsel", "Steak", "Ribs", 
-        "Cake", "Chili", "Stew", "Mackerel", "Salmon", "Clownfish", "Jellyfish", "Char", "Eel", "Swordfish", "Shark",
-        "Fish", "Meat", "Food", "Bread", "Water", "Drink",
-        -- ПРОЧЕЕ (PELF)
-        "Pelt", "Fur", "Skin", "Hide", "Leather", "Gem", "Crystal", "Diamond", "Ruby", "Emerald", "Gold", "Silver",
-        "Cultist", "Artifact", "Relic", "Treasure", "Coin", "Money"
+        "Stone", "Flint", "Rock",
+        "Axe", "Chainsaw", "Rod", "Flute", "Sack", "Knife", "Sword", "Bow", "Arrow",
+        "Ammo", "Bullet", "Gun", "Rifle", "Pistol", "Shotgun",
+        "Bandage", "Medkit", "Potion", "Heal",
+        "Carrot", "Corn", "Pumpkin", "Apple", "Berry", "Morsel", "Steak", "Ribs", "Meat",
+        "Mackerel", "Salmon", "Clownfish", "Jellyfish", "Char", "Eel", "Swordfish", "Shark", "Fish",
+        "Stew", "Cake", "Chili", "Bread", "Water", "Drink",
+        "Pelt", "Fur", "Hide", "Leather", "Skin",
+        "Gem", "Crystal", "Diamond", "Ruby", "Emerald",
+        "Cultist", "Artifact", "Relic", "Treasure",
+        "Coin", "Money", "Gold", "Silver"
     }
 
-    -- Поиск и сбор предметов по всем ключевым словам
     for _, resourceName in pairs(allResources) do
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") and obj.Name:lower():find(resourceName:lower()) then
-                -- Телепортируемся к предмету
                 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
-                wait(0.05)
-                
-                -- Подбираем предмет
+                wait(0.02)
                 firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
                 firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
-                
                 collectedCount = collectedCount + 1
             end
         end
     end
 
-    -- Возврат на исходную позицию
     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
 
     Rayfield:Notify({
-        Title = "Сбор завершен",
+        Title = "Сбор ВСЕГО завершен!",
         Content = "Собрано предметов: " .. collectedCount,
         Duration = 5,
         Image = 4483362458
     })
 end
 
--- ОТДЕЛЬНЫЕ ФУНКЦИИ СБОРА
-function UltimateHack.Functions.Collect.Wood()
-    UltimateHack.Functions.Collect.SpecificResources({"Wood", "Log", "Tree", "Stick", "Plank"}, "дерева")
-end
-
-function UltimateHack.Functions.Collect.Metal()
-    UltimateHack.Functions.Collect.SpecificResources({"Metal", "Scrap", "Iron", "Steel", "Ore", "Canister", "Tire", "Microwave", "Bolt"}, "металла")
-end
-
-function UltimateHack.Functions.Collect.Fuel()
-    UltimateHack.Functions.Collect.SpecificResources({"Fuel", "Coal", "Oil", "Gas", "Petrol"}, "топлива")
-end
-
-function UltimateHack.Functions.Collect.Tools()
-    UltimateHack.Functions.Collect.SpecificResources({"Axe", "Chainsaw", "Rod", "Flute", "Sack", "Tool", "Hammer", "Saw", "Pickaxe"}, "инструментов")
-end
-
-function UltimateHack.Functions.Collect.Ammo()
-    UltimateHack.Functions.Collect.SpecificResources({"Ammo", "Bullet", "Gun", "Rifle", "Pistol", "Shotgun", "Arrow", "Bow"}, "патронов и оружия")
-end
-
-function UltimateHack.Functions.Collect.Medkits()
-    UltimateHack.Functions.Collect.SpecificResources({"Bandage", "Medkit", "Med", "Health", "Potion", "Heal"}, "аптечек")
-end
-
-function UltimateHack.Functions.Collect.Food()
-    UltimateHack.Functions.Collect.SpecificResources({
-        "Carrot", "Corn", "Pumpkin", "Apple", "Berry", "Morsel", "Steak", "Ribs", 
-        "Cake", "Chili", "Stew", "Mackerel", "Salmon", "Clownfish", "Jellyfish", "Char", "Eel", "Swordfish", "Shark",
-        "Fish", "Meat", "Food", "Bread", "Water", "Drink"
-    }, "еды")
-end
-
-function UltimateHack.Functions.Collect.Pelf()
-    UltimateHack.Functions.Collect.SpecificResources({
-        "Pelt", "Fur", "Skin", "Hide", "Leather", "Gem", "Crystal", "Diamond", "Ruby", "Emerald", "Gold", "Silver",
-        "Cultist", "Artifact", "Relic", "Treasure", "Coin", "Money"
-    }, "прочих ресурсов")
-end
-
-function UltimateHack.Functions.Collect.SpecificResources(resources, resourceName)
-    Rayfield:Notify({
-        Title = "Сбор " .. resourceName,
-        Content = "Начинаю поиск...",
-        Duration = 3,
-        Image = 4483362458
-    })
-
-    local collectedCount = 0
-    local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-
-    for _, resourceType in pairs(resources) do
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") and obj.Name:lower():find(resourceType:lower()) then
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
-                wait(0.05)
-                
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
-                
-                collectedCount = collectedCount + 1
-            end
+function UltimateHack.Functions.Collect.ToggleAllResources(state)
+    for resource, _ in pairs(UltimateHack.CollectSettings) do
+        if resource ~= "AutoCollect" and resource ~= "AutoCollectInterval" then
+            UltimateHack.CollectSettings[resource] = state
         end
     end
-
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
-
-    Rayfield:Notify({
-        Title = "Сбор завершен",
-        Content = "Собрано " .. resourceName .. ": " .. collectedCount,
-        Duration = 5,
-        Image = 4483362458
-    })
 end
 
 -- ЗАПУСК И ОСТАНОВКА
@@ -653,19 +792,28 @@ function UltimateHack.StartAll()
     spawn(function() UltimateHack.Functions.Cheats.GodMode() end)
     spawn(function() UltimateHack.Functions.Cheats.Fly() end)
     spawn(function() UltimateHack.Functions.Cheats.SetSpeed(50) end)
+    spawn(function() UltimateHack.Functions.Cheats.InfiniteStamina() end)
+    spawn(function() UltimateHack.Functions.Cheats.NoHunger() end)
+    spawn(function() UltimateHack.Functions.Cheats.NoThirst() end)
     
     -- ЗАПУСКАЕМ ОСНОВНЫЕ СИСТЕМЫ
     spawn(function() UltimateHack.Functions.Auras.KillAura() end)
     spawn(function() UltimateHack.Functions.Auras.TreeAura() end)
+    spawn(function() UltimateHack.Functions.Auras.AutoFarm() end)
     spawn(function() UltimateHack.Functions.Automation.AutoFish() end)
     spawn(function() UltimateHack.Functions.Automation.AutoPlant() end)
     spawn(function() UltimateHack.Functions.Automation.AutoLoot() end)
     spawn(function() UltimateHack.Functions.Automation.FindChildren() end)
     spawn(function() UltimateHack.Functions.Automation.AntiAFK() end)
-    spawn(function() UltimateHack.Functions.Automation.AutoCollectResources() end)
+    spawn(function() UltimateHack.Functions.Automation.AutoCookFood() end)
+    spawn(function() UltimateHack.Functions.Collect.AutoCollectResources() end)
     
     if UltimateHack.Settings.AutoExploit then
         spawn(function() UltimateHack.Functions.AutoExploit.StartSpiralExploit() end)
+    end
+    
+    if UltimateHack.Settings.AutoOptimize then
+        UltimateHack.Functions.Optimization.ApplyMobileOptimization()
     end
     
     Rayfield:Notify({
@@ -705,33 +853,52 @@ local StopButton = MainTab:CreateButton({
     end,
 })
 
-MainTab:CreateSection("Телепортация")
+-- ТЕЛЕПОРТАЦИЯ
+TeleportTab:CreateSection("Телепортация")
 
-local SetFireButton = MainTab:CreateButton({
+local SetFireButton = TeleportTab:CreateButton({
     Name = "📍 Установить позицию костра",
     Callback = function()
         UltimateHack.Functions.Teleport.SetFirePosition()
     end,
 })
 
-local TPToFireButton = MainTab:CreateButton({
+local TPToFireButton = TeleportTab:CreateButton({
     Name = "🔥 ТП к костру",
     Callback = function()
         UltimateHack.Functions.Teleport.ToFire()
     end,
 })
 
-local TPToChildButton = MainTab:CreateButton({
+local TPToChildButton = TeleportTab:CreateButton({
     Name = "👶 ТП к ребенку",
     Callback = function()
         UltimateHack.Functions.Teleport.ToChild()
     end,
 })
 
-local TPAllButton = MainTab:CreateButton({
+local TPAllButton = TeleportTab:CreateButton({
     Name = "👥 ТП всех к костру",
     Callback = function()
         UltimateHack.Functions.Teleport.AllToFire()
+    end,
+})
+
+local TPSpawnButton = TeleportTab:CreateButton({
+    Name = "🏠 ТП на спавн",
+    Callback = function()
+        UltimateHack.Functions.Teleport.ToSpawn()
+    end,
+})
+
+TeleportTab:CreateSection("ТП к игроку")
+
+local PlayerInput = TeleportTab:CreateInput({
+    Name = "Имя игрока",
+    PlaceholderText = "Введите имя игрока",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        UltimateHack.Functions.Teleport.ToPlayer(Text)
     end,
 })
 
@@ -756,6 +923,15 @@ local TreeAuraToggle = PlayerTab:CreateToggle({
     end,
 })
 
+local AutoFarmToggle = PlayerTab:CreateToggle({
+    Name = "🌾 Автофарм",
+    CurrentValue = UltimateHack.Settings.AutoFarmAura,
+    Flag = "AutoFarmToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoFarmAura = Value
+    end,
+})
+
 local KillAuraRadiusSlider = PlayerTab:CreateSlider({
     Name = "📏 Радиус киллауры",
     Range = {10, 100},
@@ -765,6 +941,18 @@ local KillAuraRadiusSlider = PlayerTab:CreateSlider({
     Flag = "KillAuraRadiusSlider",
     Callback = function(Value)
         UltimateHack.Settings.KillAuraRadius = Value
+    end,
+})
+
+local TreeAuraRadiusSlider = PlayerTab:CreateSlider({
+    Name = "📏 Радиус вырубки",
+    Range = {10, 100},
+    Increment = 5,
+    Suffix = "ед.",
+    CurrentValue = UltimateHack.Settings.TreeAuraRadius,
+    Flag = "TreeAuraRadiusSlider",
+    Callback = function(Value)
+        UltimateHack.Settings.TreeAuraRadius = Value
     end,
 })
 
@@ -810,6 +998,33 @@ local SpeedSlider = PlayerTab:CreateSlider({
     end,
 })
 
+local InfiniteStaminaToggle = PlayerTab:CreateToggle({
+    Name = "💪 Бесконечная выносливость",
+    CurrentValue = UltimateHack.Settings.InfiniteStamina,
+    Flag = "InfiniteStaminaToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.InfiniteStamina = Value
+    end,
+})
+
+local NoHungerToggle = PlayerTab:CreateToggle({
+    Name = "🍖 Нет голода",
+    CurrentValue = UltimateHack.Settings.NoHunger,
+    Flag = "NoHungerToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.NoHunger = Value
+    end,
+})
+
+local NoThirstToggle = PlayerTab:CreateToggle({
+    Name = "💧 Нет жажды",
+    CurrentValue = UltimateHack.Settings.NoThirst,
+    Flag = "NoThirstToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.NoThirst = Value
+    end,
+})
+
 -- АВТОМАТЫ
 AutoTab:CreateSection("Автоматизация")
 
@@ -849,12 +1064,12 @@ local AutoFindChildrenToggle = AutoTab:CreateToggle({
     end,
 })
 
-local AutoCollectToggle = AutoTab:CreateToggle({
-    Name = "🔄 Автосбор ресурсов",
-    CurrentValue = UltimateHack.Settings.AutoCollectResources,
-    Flag = "AutoCollectToggle",
+local AutoCookToggle = AutoTab:CreateToggle({
+    Name = "🍳 Автоготовка еды",
+    CurrentValue = UltimateHack.Settings.AutoCookFood,
+    Flag = "AutoCookToggle",
     Callback = function(Value)
-        UltimateHack.Settings.AutoCollectResources = Value
+        UltimateHack.Settings.AutoCookFood = Value
     end,
 })
 
@@ -903,71 +1118,303 @@ local ExploitSpeedSlider = ExploitTab:CreateSlider({
     end,
 })
 
+local ExploitHeightSlider = ExploitTab:CreateSlider({
+    Name = "📐 Высота эксплойда",
+    Range = {50, 500},
+    Increment = 10,
+    Suffix = "ед.",
+    CurrentValue = UltimateHack.Settings.ExploitHeight,
+    Flag = "ExploitHeightSlider",
+    Callback = function(Value)
+        UltimateHack.Settings.ExploitHeight = Value
+    end,
+})
+
 -- СБОР РЕСУРСОВ
-CollectTab:CreateSection("Сбор ресурсов")
+local CollectToggles = {}
 
-local CollectAllButton = CollectTab:CreateButton({
-    Name = "🗲 Собрать ВСЕ предметы",
-    Callback = function()
-        UltimateHack.Functions.Collect.AllResources()
+CollectTab:CreateSection("Управление сбором")
+
+local AutoCollectToggle = CollectTab:CreateToggle({
+    Name = "🔄 Автоматический сбор",
+    CurrentValue = UltimateHack.CollectSettings.AutoCollect,
+    Flag = "AutoCollectToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.AutoCollect = Value
     end,
 })
 
-CollectTab:CreateSection("Отдельные категории")
-
-local CollectWoodButton = CollectTab:CreateButton({
-    Name = "🪵 Собрать дерево",
-    Callback = function()
-        UltimateHack.Functions.Collect.Wood()
+local CollectIntervalSlider = CollectTab:CreateSlider({
+    Name = "⏱️ Интервал автосбора",
+    Range = {1, 30},
+    Increment = 1,
+    Suffix = "сек.",
+    CurrentValue = UltimateHack.CollectSettings.AutoCollectInterval,
+    Flag = "CollectIntervalSlider",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.AutoCollectInterval = Value
     end,
 })
 
-local CollectMetalButton = CollectTab:CreateButton({
-    Name = "🔩 Собрать металл",
+CollectTab:CreateSection("Действия")
+
+local CollectEverythingButton = CollectTab:CreateButton({
+    Name = "🗲 Собрать ВСЁ",
     Callback = function()
-        UltimateHack.Functions.Collect.Metal()
+        UltimateHack.Functions.Collect.Everything()
     end,
 })
 
-local CollectFuelButton = CollectTab:CreateButton({
-    Name = "⛽ Собрать топливо",
+local CollectSelectedButton = CollectTab:CreateButton({
+    Name = "🎯 Собрать выбранное",
     Callback = function()
-        UltimateHack.Functions.Collect.Fuel()
+        UltimateHack.Functions.Collect.SelectedResources()
     end,
 })
 
-local CollectToolsButton = CollectTab:CreateButton({
-    Name = "🛠️ Собрать инструменты",
-    Callback = function()
-        UltimateHack.Functions.Collect.Tools()
+CollectTab:CreateSection("Выбор ресурсов")
+
+CollectTab:CreateSection("📦 Ресурсы")
+CollectToggles.Wood = CollectTab:CreateToggle({
+    Name = "🪵 Дерево",
+    CurrentValue = UltimateHack.CollectSettings.Wood,
+    Flag = "WoodToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Wood = Value
     end,
 })
 
-local CollectAmmoButton = CollectTab:CreateButton({
-    Name = "🔫 Собрать патроны",
-    Callback = function()
-        UltimateHack.Functions.Collect.Ammo()
+CollectToggles.Metal = CollectTab:CreateToggle({
+    Name = "🔩 Металл",
+    CurrentValue = UltimateHack.CollectSettings.Metal,
+    Flag = "MetalToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Metal = Value
     end,
 })
 
-local CollectMedkitsButton = CollectTab:CreateButton({
-    Name = "💊 Собрать аптечки",
-    Callback = function()
-        UltimateHack.Functions.Collect.Medkits()
+CollectToggles.Fuel = CollectTab:CreateToggle({
+    Name = "⛽ Топливо",
+    CurrentValue = UltimateHack.CollectSettings.Fuel,
+    Flag = "FuelToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Fuel = Value
     end,
 })
 
-local CollectFoodButton = CollectTab:CreateButton({
-    Name = "🍖 Собрать еду",
-    Callback = function()
-        UltimateHack.Functions.Collect.Food()
+CollectToggles.Stone = CollectTab:CreateToggle({
+    Name = "🪨 Камни",
+    CurrentValue = UltimateHack.CollectSettings.Stone,
+    Flag = "StoneToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Stone = Value
     end,
 })
 
-local CollectPelfButton = CollectTab:CreateButton({
-    Name = "💎 Собрать прочее (Pelf)",
+CollectTab:CreateSection("🛠️ Инструменты")
+CollectToggles.Axes = CollectTab:CreateToggle({
+    Name = "🪓 Топоры",
+    CurrentValue = UltimateHack.CollectSettings.Axes,
+    Flag = "AxesToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Axes = Value
+    end,
+})
+
+CollectToggles.Rods = CollectTab:CreateToggle({
+    Name = "🎣 Удочки",
+    CurrentValue = UltimateHack.CollectSettings.Rods,
+    Flag = "RodsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Rods = Value
+    end,
+})
+
+CollectToggles.Flutes = CollectTab:CreateToggle({
+    Name = "🎵 Флейты",
+    CurrentValue = UltimateHack.CollectSettings.Flutes,
+    Flag = "FlutesToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Flutes = Value
+    end,
+})
+
+CollectToggles.Sacks = CollectTab:CreateToggle({
+    Name = "🎒 Сумки",
+    CurrentValue = UltimateHack.CollectSettings.Sacks,
+    Flag = "SacksToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Sacks = Value
+    end,
+})
+
+CollectToggles.Weapons = CollectTab:CreateToggle({
+    Name = "⚔️ Оружие",
+    CurrentValue = UltimateHack.CollectSettings.Weapons,
+    Flag = "WeaponsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Weapons = Value
+    end,
+})
+
+CollectTab:CreateSection("💊 Медицина")
+CollectToggles.Bandages = CollectTab:CreateToggle({
+    Name = "🩹 Бинты",
+    CurrentValue = UltimateHack.CollectSettings.Bandages,
+    Flag = "BandagesToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Bandages = Value
+    end,
+})
+
+CollectToggles.Medkits = CollectTab:CreateToggle({
+    Name = "💊 Аптечки",
+    CurrentValue = UltimateHack.CollectSettings.Medkits,
+    Flag = "MedkitsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Medkits = Value
+    end,
+})
+
+CollectToggles.Potions = CollectTab:CreateToggle({
+    Name = "🧪 Зелья",
+    CurrentValue = UltimateHack.CollectSettings.Potions,
+    Flag = "PotionsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Potions = Value
+    end,
+})
+
+CollectTab:CreateSection("🔫 Боеприпасы")
+CollectToggles.Ammo = CollectTab:CreateToggle({
+    Name = "🔫 Патроны",
+    CurrentValue = UltimateHack.CollectSettings.Ammo,
+    Flag = "AmmoToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Ammo = Value
+    end,
+})
+
+CollectToggles.Guns = CollectTab:CreateToggle({
+    Name = "🔫 Огнестрельное оружие",
+    CurrentValue = UltimateHack.CollectSettings.Guns,
+    Flag = "GunsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Guns = Value
+    end,
+})
+
+CollectTab:CreateSection("🍖 Еда")
+CollectToggles.Vegetables = CollectTab:CreateToggle({
+    Name = "🥕 Овощи/Фрукты",
+    CurrentValue = UltimateHack.CollectSettings.Vegetables,
+    Flag = "VegetablesToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Vegetables = Value
+    end,
+})
+
+CollectToggles.Meat = CollectTab:CreateToggle({
+    Name = "🥩 Мясо",
+    CurrentValue = UltimateHack.CollectSettings.Meat,
+    Flag = "MeatToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Meat = Value
+    end,
+})
+
+CollectToggles.Fish = CollectTab:CreateToggle({
+    Name = "🐟 Рыба",
+    CurrentValue = UltimateHack.CollectSettings.Fish,
+    Flag = "FishToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Fish = Value
+    end,
+})
+
+CollectToggles.CookedFood = CollectTab:CreateToggle({
+    Name = "🍲 Готовые блюда",
+    CurrentValue = UltimateHack.CollectSettings.CookedFood,
+    Flag = "CookedFoodToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.CookedFood = Value
+    end,
+})
+
+CollectToggles.Water = CollectTab:CreateToggle({
+    Name = "💧 Вода",
+    CurrentValue = UltimateHack.CollectSettings.Water,
+    Flag = "WaterToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Water = Value
+    end,
+})
+
+CollectTab:CreateSection("💎 Прочее (Pelf)")
+CollectToggles.Pelts = CollectTab:CreateToggle({
+    Name = "🐾 Шкуры",
+    CurrentValue = UltimateHack.CollectSettings.Pelts,
+    Flag = "PeltsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Pelts = Value
+    end,
+})
+
+CollectToggles.Gems = CollectTab:CreateToggle({
+    Name = "💎 Драгоценности",
+    CurrentValue = UltimateHack.CollectSettings.Gems,
+    Flag = "GemsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Gems = Value
+    end,
+})
+
+CollectToggles.Artifacts = CollectTab:CreateToggle({
+    Name = "🏺 Артефакты",
+    CurrentValue = UltimateHack.CollectSettings.Artifacts,
+    Flag = "ArtifactsToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Artifacts = Value
+    end,
+})
+
+CollectToggles.Currency = CollectTab:CreateToggle({
+    Name = "💰 Валюта",
+    CurrentValue = UltimateHack.CollectSettings.Currency,
+    Flag = "CurrencyToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Currency = Value
+    end,
+})
+
+CollectToggles.Miscellaneous = CollectTab:CreateToggle({
+    Name = "📦 Разное",
+    CurrentValue = UltimateHack.CollectSettings.Miscellaneous,
+    Flag = "MiscellaneousToggle",
+    Callback = function(Value)
+        UltimateHack.CollectSettings.Miscellaneous = Value
+    end,
+})
+
+CollectTab:CreateSection("Быстрые настройки")
+
+local SelectAllButton = CollectTab:CreateButton({
+    Name = "✅ Выбрать всё",
     Callback = function()
-        UltimateHack.Functions.Collect.Pelf()
+        UltimateHack.Functions.Collect.ToggleAllResources(true)
+        for _, toggle in pairs(CollectToggles) do
+            if toggle then toggle:Set(true) end
+        end
+    end,
+})
+
+local DeselectAllButton = CollectTab:CreateButton({
+    Name = "❌ Очистить выбор",
+    Callback = function()
+        UltimateHack.Functions.Collect.ToggleAllResources(false)
+        for _, toggle in pairs(CollectToggles) do
+            if toggle then toggle:Set(false) end
+        end
     end,
 })
 
@@ -1016,9 +1463,38 @@ local FogToggle = OptimizationTab:CreateToggle({
     end,
 })
 
+local ParticlesToggle = OptimizationTab:CreateToggle({
+    Name = "✨ Частицы",
+    CurrentValue = true,
+    Flag = "ParticlesToggle",
+    Callback = function(Value)
+        if Value then
+            UltimateHack.Functions.Optimization.EnableParticles()
+        else
+            UltimateHack.Functions.Optimization.DisableParticles()
+        end
+    end,
+})
+
+local MobileOptimizeButton = OptimizationTab:CreateButton({
+    Name = "📱 Применить мобильную оптимизацию",
+    Callback = function()
+        UltimateHack.Functions.Optimization.ApplyMobileOptimization()
+    end,
+})
+
+local AutoOptimizeToggle = OptimizationTab:CreateToggle({
+    Name = "⚡ Автооптимизация при запуске",
+    CurrentValue = UltimateHack.Settings.AutoOptimize,
+    Flag = "AutoOptimizeToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoOptimize = Value
+    end,
+})
+
 Rayfield:Notify({
     Title = "99 Nights Ultimate Hack",
-    Content = "Успешно загружен! v3.0 - ПОЛНАЯ ВЕРСИЯ",
+    Content = "Успешно загружен! v4.0 - ПОЛНАЯ ВЕРСИЯ",
     Duration = 6,
     Image = 4483362458
 })
