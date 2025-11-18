@@ -1,859 +1,1026 @@
--- 99 ночей в лесу - ULTIMATE COMPLETE FINAL EDITION
--- ВСЕ ФУНКЦИИ ВКЛЮЧЕНЫ: АВТОЭКСПЛОИТ, ПОЛЕТ, ТЕЛЕПОРТЫ, АВТОСБОР, АВТОСАЖАНИЕ, АВТОЛУТ, ВЫБОР ИГРОКОВ
+-- 99 NIGHTS ULTIMATE MEGA HACK by I.S.-1
+-- ПОЛНЫЙ ФУНКЦИОНАЛ НА ВСЕ СЛУЧАИ ЖИЗНИ
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+local UltimateHack = {}
 
--- ОПРЕДЕЛЯЕМ ПЛАТФОРМУ
-local IS_MOBILE = UserInputService.TouchEnabled
-local IS_PC = not IS_MOBILE
+-- Загружаем Rayfield
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source.lua'))()
+local Window = Rayfield:CreateWindow({
+   Name = "99 NIGHTS ULTIMATE HACK",
+   LoadingTitle = "I.S.-1 Loading...",
+   LoadingSubtitle = "by Infection System",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "99NightsHack",
+      FileName = "Config.json"
+   },
+   Discord = {
+      Enabled = false,
+      Invite = "noinvitelink",
+      RememberJoins = true
+   },
+   KeySystem = false,
+})
 
--- ЖДЕМ ЗАГРУЗКИ
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-wait(2)
+-- ОСНОВНЫЕ ТАБЫ
+local MainTab = Window:CreateTab("Главные функции", 4483362458)
+local PlayerTab = Window:CreateTab("Игрок", 4483362458)
+local AutoTab = Window:CreateTab("Автоматы", 4483362458)
+local ExploitTab = Window:CreateTab("Эксплойд", 4483362458)
+local CollectTab = Window:CreateTab("Сбор ресурсов", 4483362458)
+local OptimizationTab = Window:CreateTab("Оптимизация", 4483362458)
 
--- ПОЛНЫЙ КОНФИГ
-getgenv().IS1_Config = {
-    AutoExplore = {
-        Enabled = false, 
-        Speed = IS_MOBILE and 80 or 100, 
-        Height = IS_MOBILE and 30 or 50,
-        CollectResources = true,
-        FindChild = true,
-        MapBounds = IS_MOBILE and 1000 or 2000
-    },
-    FlyMode = {
-        Enabled = false, 
-        Speed = IS_MOBILE and 40 or 50, 
-        Noclip = true
-    },
-    Movement = {
-        WalkSpeed = 16, 
-        JumpPower = 50
-    },
-    AutoCollect = {
-        Wood = true, Metal = true, Food = true, 
-        Tools = true, Chairs = true, Fuel = true,
-        Ammo = true, Weapons = true, Saplings = true
-    },
-    AutoPlant = {
-        Enabled = false,
-        Mode = "TreeInTree",
-        Speed = IS_MOBILE and 3 or 2,
-        CollectSaplings = true
-    },
-    AutoLoot = {
-        Enabled = false,
-        Radius = IS_MOBILE and 30 or 50,
-        UseInstantOpen = true,
-        ShowProgress = true,
-        ReturnDelay = 2
-    },
-    AutoComplete = {
-        Enabled = true,
-        ReturnToFire = true,
-        CraftToWorkbench = true,
-        FuelToFire = true
-    }
+-- НАСТРОЙКИ
+UltimateHack.Settings = {
+    -- ТЕЛЕПОРТАЦИЯ
+    AutoTPToFire = true,
+    
+    -- АУРЫ
+    KillAura = true,
+    KillAuraRadius = 50,
+    TreeAura = true,
+    TreeAuraRadius = 30,
+    
+    -- АВТОМАТЫ
+    AutoFish = true,
+    AutoPlant = true,
+    AutoLoot = true,
+    AntiAFK = true,
+    AutoFindChildren = true,
+    AutoCollectResources = false,
+    
+    -- ЧИТЫ
+    FlyHack = true,
+    NoClip = false,
+    GodMode = true,
+    SpeedHack = false,
+    SpeedMultiplier = 2,
+    
+    -- ЭКСПЛОЙД
+    AutoExploit = true,
+    ExploitRadius = 1000,
+    ExploitSpeed = 50,
+    
+    -- СБОР РЕСУРСОВ
+    CollectWood = true,
+    CollectMetal = true,
+    CollectFuel = true,
+    CollectTools = true,
+    CollectAmmo = true,
+    CollectMedkits = true,
+    CollectFood = true,
+    CollectPelf = true,
 }
 
--- ВСЕ ПЕРЕМЕННЫЕ
-local flyConnection, noclipConnection, exploreConnection, plantConnection, lootConnection
-local bodyVelocity, bodyGyro
-local selectedPlayers = {}
-getgenv().StartPosition = nil
-getgenv().ChildLocation = nil
-getgenv().LootStartPosition = nil
+UltimateHack.FirePosition = Vector3.new(0, 0, 0)
+UltimateHack.IsRunning = false
+UltimateHack.ChildrenNames = {"Дино малыш", "Малыш Кракен", "Малыш спрут", "Малыш коала"}
 
--- ЗАГРУЗКА RAYFIELD
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield", true))()
+-- ФУНКЦИИ
+UltimateHack.Functions = {}
 
-local Window = Rayfield:CreateWindow({
-    Name = IS_MOBILE and "99 ночей 📱" or "99 ночей - ULTIMATE",
-    LoadingTitle = "Загрузка...",
-    LoadingSubtitle = IS_MOBILE and "Mobile Optimized" or "PC Edition",
-    ConfigurationSaving = {Enabled = false}
-})
+-- ОПТИМИЗАЦИЯ
+UltimateHack.Functions.Optimization = {}
 
--- 🔧 АДАПТИВНЫЕ ФУНКЦИИ ДЛЯ ИНТЕРФЕЙСА
-function createMobileButton(tab, name, callback)
-    return tab:CreateButton({
-        Name = IS_MOBILE and string.sub(name, 1, 15) or name,
-        Callback = callback
-    })
-end
-
-function createMobileToggle(tab, name, callback)
-    return tab:CreateToggle({
-        Name = IS_MOBILE and string.sub(name, 1, 20) or name,
-        CurrentValue = false,
-        Callback = callback
-    })
-end
-
--- 🔧 ОСНОВНЫЕ ФУНКЦИИ
-function findFire()
-    for _, name in pairs({"Campfire", "Fire", "CampFire", "MainFire"}) do
-        local fire = workspace:FindFirstChild(name)
-        if fire then return fire end
-    end
-    return nil
-end
-
-function findChild()
-    for _, child in pairs(workspace:GetDescendants()) do
-        if child:IsA("Model") and child:FindFirstChild("Humanoid") then
-            if child.Name:lower():find("child") or child.Name:lower():find("kid") then
-                return child
-            end
-        end
-    end
-    return nil
-end
-
-function teleportToFire()
-    -- Ищем костер-спавн по разным возможным именам
-    local fire = nil
-    
-    -- Проверяем различные варианты названий спавна
-    local possibleNames = {
-        "Spawn", "Campfire", "Fire", "CampFire", "MainFire", 
-        "Base", "Start", "Home", "SpawnPoint"
-    }
-    
-    -- Сначала ищем в workspace
-    for _, name in pairs(possibleNames) do
-        fire = workspace:FindFirstChild(name)
-        if fire then break end
-    end
-    
-    -- Если не нашли, ищем среди всех потомков workspace
-    if not fire then
-        for _, obj in pairs(workspace:GetDescendants()) do
-            for _, name in pairs(possibleNames) do
-                if obj.Name:lower():find(name:lower()) then
-                    fire = obj
-                    break
-                end
-            end
-            if fire then break end
-        end
-    end
-    
-    -- Если все еще не нашли, ищем части с желтым/оранжевым цветом (типичный цвет костра)
-    if not fire then
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("Part") then
-                if obj.BrickColor == BrickColor.new("Bright orange") or 
-                   obj.BrickColor == BrickColor.new("Bright yellow") or
-                   obj.BrickColor == BrickColor.new("Neon orange") then
-                    fire = obj
-                    break
-                end
-            end
-        end
-    end
-    
-    if not fire then
-        Rayfield:Notify({Title = "❌ ОШИБКА", Content = "Костер-спавн не найден!", Duration = 4})
-        return false
-    end
-    
-    -- Определяем позицию для телепорта
-    local targetPosition
-    if fire:IsA("Model") and fire.PrimaryPart then
-        targetPosition = fire.PrimaryPart.Position
-    elseif fire:IsA("Part") then
-        targetPosition = fire.Position
-    else
-        targetPosition = fire:GetPivot().Position
-    end
-    
-    -- Телепортируемся немного выше позиции костра
-    Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 5, 0))
-    
-    Rayfield:Notify({
-        Title = "✅ УСПЕХ", 
-        Content = "Телепорт к костру-спавну!",
-        Duration = 3
-    })
-    return true
-end
-
-function teleportToChild()
-    local child = findChild()
-    if child then
-        Character.HumanoidRootPart.CFrame = child:GetPivot() or child.PrimaryPart.CFrame
-        Rayfield:Notify({Title = "✅ УСПЕХ", Content = "Телепорт к ребенку!", Duration = 3})
-    else
-        Rayfield:Notify({Title = "❌ ОШИБКА", Content = "Ребенок не найден!", Duration = 3})
-    end
-end
-
--- 📦 ПОЛНАЯ СИСТЕМА СБОРА ПРЕДМЕТОВ
-function collectItems(itemType)
-    local collected = 0
-    for _, item in pairs(workspace:GetDescendants()) do
-        if item:IsA("Part") and item:FindFirstChild("ClickDetector") then
-            local shouldCollect = false
-            
-            if itemType == "Wood" and (item.Name:find("Wood") or item.Name:find("Log") or item.Name:find("Plank")) then
-                shouldCollect = true
-            elseif itemType == "Metal" and (item.Name:find("Metal") or item.Name:find("Iron") or item.Name:find("Steel")) then
-                shouldCollect = true
-            elseif itemType == "Food" and (item.Name:find("Morsel") or item.Name:find("Steak") or item.Name:find("Ribs") or item.Name:find("Fish") or item.Name:find("Carrot")) then
-                shouldCollect = true
-            elseif itemType == "Tools" and (item.Name:find("Tool") or item.Name:find("Flashlight") or item.Name:find("Axe") or item.Name:find("Pickaxe")) then
-                shouldCollect = true
-            elseif itemType == "Chairs" and (item.Name:find("Chair") or item.Name:find("Stool")) then
-                shouldCollect = true
-            elseif itemType == "Fuel" and (item.Name:find("Coal") or item.Name:find("Canister") or item.Name:find("Barrel")) then
-                shouldCollect = true
-            elseif itemType == "Weapons" and (item.Name:find("Rifle") or item.Name:find("Gun") or item.Name:find("Pistol") or item.Name:find("Shotgun")) then
-                shouldCollect = true
-            elseif itemType == "Ammo" and (item.Name:find("Ammo") or item.Name:find("Bullet") or item.Name:find("Magazine")) then
-                shouldCollect = true
-            elseif itemType == "Saplings" and (item.Name:find("Sapling") or item.Name:find("Seed") or item.Name:find("Plant")) then
-                shouldCollect = true
-            elseif itemType == "All" then
-                shouldCollect = true
-            end
-            
-            if shouldCollect and getgenv().IS1_Config.AutoCollect[itemType] ~= false then
-                pcall(function()
-                    fireclickdetector(item.ClickDetector)
-                    collected = collected + 1
-                    wait(0.01)
-                end)
-            end
-        end
-    end
-    
-    Rayfield:Notify({
-        Title = "📦 ВЗЯТИЕ ПРЕДМЕТОВ",
-        Content = "Собрано " .. collected .. " предметов типа: " .. itemType,
-        Duration = 4
-    })
-end
-
--- 🎯 ПОЛНАЯ СИСТЕМА ВЫБОРА И ТП ИГРОКОВ
-function updatePlayerSelection()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and not selectedPlayers[player.Name] then
-            selectedPlayers[player.Name] = false
-        end
-    end
-end
-
-function countSelectedPlayers()
-    local count = 0
-    for _, isSelected in pairs(selectedPlayers) do
-        if isSelected then count = count + 1 end
-    end
-    return count
-end
-
-function teleportSelectedPlayersToFire()
-    local selectedCount = countSelectedPlayers()
-    
-    if selectedCount == 0 then
+function UltimateHack.Functions.Optimization.SetFPS(fps)
+    if setfpscap then
+        setfpscap(fps)
         Rayfield:Notify({
-            Title = "❌ НЕТ ВЫБРАННЫХ",
-            Content = "Сначала выбери игроков для ТП!",
-            Duration = 4
+            Title = "Оптимизация",
+            Content = "FPS установлен: " .. fps,
+            Duration = 3,
+            Image = 4483362458
         })
-        return
     end
-    
-    local fire = findFire()
-    if not fire then return end
-    
-    local targetPosition = fire:IsA("Model") and fire.PrimaryPart and fire.PrimaryPart.Position or fire.Position
-    local teleportedCount = 0
-    
+end
+
+function UltimateHack.Functions.Optimization.SetQuality(level)
+    settings().Rendering.QualityLevel = level
     Rayfield:Notify({
-        Title = "🎯 ТП ВЫБРАННЫХ",
-        Content = "Телепортируем " .. selectedCount .. " игроков...",
-        Duration = 4
-    })
-    
-    for playerName, shouldTeleport in pairs(selectedPlayers) do
-        if shouldTeleport then
-            local player = Players:FindFirstChild(playerName)
-            if player and player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                pcall(function()
-                    player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(
-                        math.random(-3, 3), 3, math.random(-3, 3)
-                    ))
-                    teleportedCount = teleportedCount + 1
-                    wait(0.2)
-                end)
-            end
-        end
-    end
-    
-    Rayfield:Notify({
-        Title = "✅ ТП ВЫПОЛНЕН",
-        Content = "Успешно телепортировано " .. teleportedCount .. " игроков!",
-        Duration = 5
+        Title = "Оптимизация",
+        Content = "Качество графики установлено: " .. level,
+        Duration = 3,
+        Image = 4483362458
     })
 end
 
-function teleportAllPlayersToFire()
-    local fire = findFire()
-    if not fire then return end
-    
-    local targetPosition = fire:IsA("Model") and fire.PrimaryPart and fire.PrimaryPart.Position or fire.Position
-    local teleportedCount = 0
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            pcall(function()
-                player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(
-                    math.random(-5, 5), 3, math.random(-5, 5)
-                ))
-                teleportedCount = teleportedCount + 1
-                wait(0.1)
-            end)
-        end
-    end
-    
-    Rayfield:Notify({
-        Title = "💥 ТП ВСЕХ ИГРОКОВ",
-        Content = "Телепортировано " .. teleportedCount .. " игроков!",
-        Duration = 5
-    })
+function UltimateHack.Functions.Optimization.ToggleShadows()
+    game:GetService("Lighting").GlobalShadows = not game:GetService("Lighting").GlobalShadows
 end
 
--- 🦅 ПОЛНАЯ СИСТЕМА ПОЛЕТА
-function toggleFlyMode(state)
-    if state then
-        if flyConnection then flyConnection:Disconnect() end
-        if bodyVelocity then bodyVelocity:Destroy() end
-        if bodyGyro then bodyGyro:Destroy() end
-        
-        bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(100000, 100000, 100000)
-        bodyVelocity.Parent = Character.HumanoidRootPart
-        
-        bodyGyro = Instance.new("BodyGyro")
-        bodyGyro.MaxTorque = Vector3.new(100000, 100000, 100000)
-        bodyGyro.Parent = Character.HumanoidRootPart
-        
-        flyConnection = RunService.Heartbeat:Connect(function()
-            if not bodyGyro or not bodyVelocity then return end
-            bodyGyro.CFrame = workspace.CurrentCamera.CFrame
-            
-            local direction = Vector3.new()
-            
-            if IS_PC then
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + workspace.CurrentCamera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - workspace.CurrentCamera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - workspace.CurrentCamera.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + workspace.CurrentCamera.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
-                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
-            else
-                direction = workspace.CurrentCamera.CFrame.LookVector
-            end
-            
-            bodyVelocity.Velocity = direction * getgenv().IS1_Config.FlyMode.Speed
-        end)
-        
-        if getgenv().IS1_Config.FlyMode.Noclip then
-            noclipConnection = RunService.Stepped:Connect(function()
-                for _, part in pairs(Character:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
-                end
-            end)
-        end
-        
+function UltimateHack.Functions.Optimization.ToggleFog()
+    local lighting = game:GetService("Lighting")
+    lighting.FogEnd = lighting.FogEnd == 100000 and 1000 or 100000
+end
+
+-- ТЕЛЕПОРТАЦИЯ
+UltimateHack.Functions.Teleport = {}
+
+function UltimateHack.Functions.Teleport.ToFire()
+    local player = game.Players.LocalPlayer
+    if player and player.Character then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(UltimateHack.FirePosition)
         Rayfield:Notify({
-            Title = IS_MOBILE and "🦅 ПОЛЕТ" or "🦅 ПОЛЕТ АКТИВЕН",
-            Content = IS_MOBILE and "Двигайтесь вперед" or "WASD + Space/Shift для управления",
-            Duration = 4
+            Title = "Телепортация",
+            Content = "Телепорт к костру выполнен!",
+            Duration = 3,
+            Image = 4483362458
         })
-    else
-        if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-        if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
-        if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
-        if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
-        
-        for _, part in pairs(Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = true end
-        end
     end
 end
 
--- 🚀 ПОЛНАЯ СИСТЕМА АВТОЭКСПЛОИТА
-function startAutoExplore()
-    local center = findFire() or Character.HumanoidRootPart
-    if not center then return end
-    
-    getgenv().StartPosition = Character.HumanoidRootPart.Position
-    local currentAngle, currentRadius = 0, 10
-    local maxRadius = getgenv().IS1_Config.AutoExplore.MapBounds
-    
-    exploreConnection = RunService.Heartbeat:Connect(function()
-        if not getgenv().IS1_Config.AutoExplore.Enabled then
-            if exploreConnection then exploreConnection:Disconnect() end
-            return
-        end
-        
-        if currentRadius >= maxRadius then
-            getgenv().IS1_Config.AutoExplore.Enabled = false
-            Rayfield:Notify({Title = "✅ ЗАВЕРШЕНО", Content = "Карта полностью исследована!", Duration = 5})
-            return
-        end
-        
-        currentAngle = currentAngle + 0.05
-        currentRadius = currentRadius + 2
-        
-        local x, z = math.cos(currentAngle) * currentRadius, math.sin(currentAngle) * currentRadius
-        local targetPosition = (center:IsA("Model") and center.PrimaryPart and center.PrimaryPart.Position or center.Position) + Vector3.new(x, getgenv().IS1_Config.AutoExplore.Height, z)
-        
-        Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        
-        -- АВТОСБОР РЕСУРСОВ ВО ВРЕМЯ ПОЛЕТА
-        if getgenv().IS1_Config.AutoExplore.CollectResources then
-            for _, item in pairs(workspace:GetDescendants()) do
-                if item:IsA("Part") and item:FindFirstChild("ClickDetector") then
-                    local distance = (Character.HumanoidRootPart.Position - item.Position).Magnitude
-                    if distance <= 50 then
-                        pcall(function() 
-                            fireclickdetector(item.ClickDetector)
-                            wait(0.01)
-                        end)
-                    end
-                end
-            end
-        end
-        
-        -- ПОИСК РЕБЕНКА
-        if getgenv().IS1_Config.AutoExplore.FindChild then
-            local child = findChild()
-            if child then
-                getgenv().ChildLocation = child:GetPivot().Position
-            end
-        end
-    end)
-end
-
--- 🌳 ПОЛНАЯ СИСТЕМА АВТОСАЖАНИЯ
-function startAutoPlanting()
-    local fire = findFire()
-    if not fire then
-        Rayfield:Notify({Title = "❌ ОШИБКА", Content = "Костер не найден для посадки!", Duration = 4})
-        getgenv().IS1_Config.AutoPlant.Enabled = false
-        return
-    end
-    
-    local firePosition = fire:IsA("Model") and fire.PrimaryPart and fire.PrimaryPart.Position or fire.Position
-    
-    plantConnection = RunService.Heartbeat:Connect(function()
-        if not getgenv().IS1_Config.AutoPlant.Enabled then
-            if plantConnection then plantConnection:Disconnect() end
-            return
-        end
-        
-        -- СБОР САЖЕНЦЕВ С КАРТЫ
-        if getgenv().IS1_Config.AutoPlant.CollectSaplings then
-            for _, item in pairs(workspace:GetDescendants()) do
-                if item:IsA("Part") and item:FindFirstChild("ClickDetector") then
-                    if item.Name:find("Sapling") or item.Name:find("Seed") then
-                        local distance = (Character.HumanoidRootPart.Position - item.Position).Magnitude
-                        if distance <= 30 then
-                            pcall(function()
-                                fireclickdetector(item.ClickDetector)
-                                wait(0.05)
-                            end)
-                        end
-                    end
-                end
-            end
-        end
-        
-        -- САЖАЕМ ДЕРЕВЬЯ
-        if getgenv().IS1_Config.AutoPlant.Mode == "TreeInTree" then
-            local plantPosition = firePosition + Vector3.new(5, 0, 0)
-            Character.HumanoidRootPart.CFrame = CFrame.new(plantPosition)
-            
-            pcall(function()
-                local plantTool = LocalPlayer.Backpack:FindFirstChild("PlantTool") or Character:FindFirstChild("PlantTool")
-                if plantTool then
-                    plantTool:Activate()
-                else
-                    local plantEvent = game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree")
-                    if plantEvent then
-                        plantEvent:FireServer(plantPosition)
-                    end
-                end
-            end)
-            
-        elseif getgenv().IS1_Config.AutoPlant.Mode == "Wall" then
-            for i = 1, 8 do
-                if not getgenv().IS1_Config.AutoPlant.Enabled then break end
-                
-                local angle = (i / 8) * math.pi * 2
-                local x = math.cos(angle) * 15
-                local z = math.sin(angle) * 15
-                local plantPosition = firePosition + Vector3.new(x, 0, z)
-                
-                Character.HumanoidRootPart.CFrame = CFrame.new(plantPosition)
-                
-                pcall(function()
-                    local plantEvent = game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree")
-                    if plantEvent then
-                        plantEvent:FireServer(plantPosition)
-                    end
-                end)
-                
-                wait(0.5)
-            end
-        end
-        
-        wait(getgenv().IS1_Config.AutoPlant.Speed)
-    end)
-end
-
-function stopAutoPlanting()
-    getgenv().IS1_Config.AutoPlant.Enabled = false
-    if plantConnection then
-        plantConnection:Disconnect()
-        plantConnection = nil
-    end
-end
-
--- 🎒 ПОЛНАЯ СИСТЕМА АВТОЛУТА
-function startAutoLoot()
-    getgenv().LootStartPosition = Character.HumanoidRootPart.Position
-    local chestsFound = 0
-    local totalChests = 0
-    
-    local allChests = {}
-    for _, item in pairs(workspace:GetDescendants()) do
-        if item:IsA("Model") and (item.Name:lower():find("chest") or item.Name:lower():find("box") or item.Name:lower():find("cache")) then
-            table.insert(allChests, item)
-        end
-    end
-    
-    totalChests = #allChests
-    
-    if totalChests == 0 then
-        Rayfield:Notify({
-            Title = "❌ СУНДУКОВ НЕТ",
-            Content = "На карте не найдено сундуков!",
-            Duration = 4
-        })
-        getgenv().IS1_Config.AutoLoot.Enabled = false
-        return
-    end
-    
-    Rayfield:Notify({
-        Title = "🎒 НАЧИНАЕМ ЛУТ",
-        Content = "Найдено " .. totalChests .. " сундуков!",
-        Duration = 4
-    })
-    
-    lootConnection = RunService.Heartbeat:Connect(function()
-        if not getgenv().IS1_Config.AutoLoot.Enabled then
-            if lootConnection then lootConnection:Disconnect() end
-            return
-        end
-        
-        local remainingChests = 0
-        
-        for _, chest in pairs(allChests) do
-            if not getgenv().IS1_Config.AutoLoot.Enabled then break end
-            
-            local distance = (Character.HumanoidRootPart.Position - chest:GetPivot().Position).Magnitude
-            if distance <= getgenv().IS1_Config.AutoLoot.Radius then
-                remainingChests = remainingChests + 1
-                
-                if getgenv().IS1_Config.AutoLoot.UseInstantOpen then
-                    pcall(function()
-                        local openEvent = game:GetService("ReplicatedStorage"):FindFirstChild("OpenChest")
-                        if openEvent then
-                            openEvent:FireServer(chest)
-                            chestsFound = chestsFound + 1
-                        else
-                            for _, part in pairs(chest:GetDescendants()) do
-                                if part:IsA("ClickDetector") then
-                                    fireclickdetector(part)
-                                    chestsFound = chestsFound + 1
-                                    break
-                                end
-                            end
-                        end
-                    end)
-                else
-                    local originalPosition = Character.HumanoidRootPart.Position
-                    Character.HumanoidRootPart.CFrame = chest:GetPivot()
-                    
-                    pcall(function()
-                        for _, part in pairs(chest:GetDescendants()) do
-                            if part:IsA("ClickDetector") then
-                                fireclickdetector(part)
-                                chestsFound = chestsFound + 1
-                                break
-                            end
-                        end
-                    end)
-                    
-                    Character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
-                end
-            end
-        end
-        
-        if remainingChests == 0 then
-            getgenv().IS1_Config.AutoLoot.Enabled = false
-            
+function UltimateHack.Functions.Teleport.ToPlayer(playerName)
+    local targetPlayer = game.Players:FindFirstChild(playerName)
+    if targetPlayer and targetPlayer.Character then
+        local player = game.Players.LocalPlayer
+        if player.Character then
+            player.Character.HumanoidRootPart.CFrame = targetPlayer.Character.HumanoidRootPart.CFrame
             Rayfield:Notify({
-                Title = "✅ ЛУТ ЗАВЕРШЕН",
-                Content = "Вскрыто " .. chestsFound .. " из " .. totalChests .. " сундуков!",
-                Duration = 6
+                Title = "Телепортация",
+                Content = "Телепорт к игроку " .. playerName .. " выполнен!",
+                Duration = 3,
+                Image = 4483362458
             })
         end
-    end)
+    else
+        Rayfield:Notify({
+            Title = "Ошибка",
+            Content = "Игрок " .. playerName .. " не найден!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
 end
 
-function quickLootAllChests()
-    local chestsFound = 0
-    local totalChests = 0
-    
-    for _, item in pairs(workspace:GetDescendants()) do
-        if item:IsA("Model") and item.Name:lower():find("chest") then
-            totalChests = totalChests + 1
+function UltimateHack.Functions.Teleport.ToChild()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player:FindFirstChild("Status") and player.Status.Value == "Child" then
+            local playerChar = game.Players.LocalPlayer.Character
+            if playerChar and player.Character then
+                playerChar.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
+                Rayfield:Notify({
+                    Title = "Телепортация",
+                    Content = "Телепорт к ребенку выполнен!",
+                    Duration = 3,
+                    Image = 4483362458
+                })
+                return
+            end
         end
     end
-    
-    if totalChests == 0 then
+    Rayfield:Notify({
+        Title = "Ошибка",
+        Content = "Ребенок не найден!",
+        Duration = 3,
+        Image = 4483362458
+    })
+end
+
+function UltimateHack.Functions.Teleport.SetFirePosition()
+    local player = game.Players.LocalPlayer
+    if player.Character then
+        UltimateHack.FirePosition = player.Character.HumanoidRootPart.Position
         Rayfield:Notify({
-            Title = "❌ СУНДУКОВ НЕТ",
-            Content = "На карте не найдено сундуков!",
-            Duration = 4
+            Title = "Костер",
+            Content = "Позиция костра установлена!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+end
+
+function UltimateHack.Functions.Teleport.AllToFire()
+    local localPlayer = game.Players.LocalPlayer
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(UltimateHack.FirePosition)
+        end
+    end
+    Rayfield:Notify({
+        Title = "Телепортация",
+        Content = "Все игроки телепортированы к костру!",
+        Duration = 3,
+        Image = 4483362458
+    })
+end
+
+-- АУРЫ
+UltimateHack.Functions.Auras = {}
+
+function UltimateHack.Functions.Auras.KillAura()
+    while UltimateHack.Settings.KillAura and UltimateHack.IsRunning do
+        wait(0.1)
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        
+        if character then
+            -- УБИВАЕМ ВСЕХ ВРАГОВ (ВОЛКИ, МЕДВЕДИ, ИГРОКИ)
+            for _, target in pairs(game.Players:GetPlayers()) do
+                if target ~= player and target.Character then
+                    local targetChar = target.Character
+                    local distance = (character.HumanoidRootPart.Position - targetChar.HumanoidRootPart.Position).Magnitude
+                    
+                    if distance < UltimateHack.Settings.KillAuraRadius then
+                        -- НЕ УБИВАЕМ ДЕТЕЙ!
+                        if not (target:FindFirstChild("Status") and target.Status.Value == "Child") then
+                            targetChar.Humanoid.Health = 0
+                        end
+                    end
+                end
+            end
+            
+            -- УБИВАЕМ NPC ВРАГОВ
+            for _, npc in pairs(workspace:GetDescendants()) do
+                if npc:FindFirstChild("Humanoid") and (npc.Name:find("Wolf") or npc.Name:find("Bear") or npc.Name:find("Enemy")) then
+                    local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
+                    if distance < UltimateHack.Settings.KillAuraRadius then
+                        npc.Humanoid.Health = 0
+                    end
+                end
+            end
+        end
+    end
+end
+
+function UltimateHack.Functions.Auras.TreeAura()
+    while UltimateHack.Settings.TreeAura and UltimateHack.IsRunning do
+        wait(0.2)
+        local playerChar = game.Players.LocalPlayer.Character
+        if playerChar then
+            for _, tree in pairs(workspace:GetDescendants()) do
+                if (tree.Name:find("Tree") or tree.Name:find("Wood") or tree.Name:find("Log")) and tree:IsA("BasePart") then
+                    if (playerChar.HumanoidRootPart.Position - tree.Position).Magnitude < UltimateHack.Settings.TreeAuraRadius then
+                        tree:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- АВТОМАТЫ
+UltimateHack.Functions.Automation = {}
+
+function UltimateHack.Functions.Automation.AutoFish()
+    while UltimateHack.Settings.AutoFish and UltimateHack.IsRunning do
+        wait(2)
+        local fishingRod = game.Players.LocalPlayer.Backpack:FindFirstChild("FishingRod") or game.Players.LocalPlayer.Character:FindFirstChild("FishingRod")
+        if fishingRod then
+            pcall(function()
+                game:GetService("ReplicatedStorage"):FindFirstChild("FishingEvent"):FireServer("StartFishing")
+            end)
+        end
+    end
+end
+
+function UltimateHack.Functions.Automation.AutoPlant()
+    while UltimateHack.Settings.AutoPlant and UltimateHack.IsRunning do
+        wait(3)
+        
+        -- ЗАЩИТНАЯ СТЕНА ВОКРУГ КОСТРА
+        for x = -20, 20, 4 do
+            for z = -20, 20, 4 do
+                if x == -20 or x == 20 or z == -20 or z == 20 then
+                    local plantPos = UltimateHack.FirePosition + Vector3.new(x, 0, z)
+                    pcall(function()
+                        game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree"):FireServer(plantPos)
+                    end)
+                end
+            end
+        end
+    end
+end
+
+function UltimateHack.Functions.Automation.AutoLoot()
+    while UltimateHack.Settings.AutoLoot and UltimateHack.IsRunning do
+        wait(4)
+        local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+        
+        -- ЛУТАЕМ СУНДУКИ И РЕСУРСЫ
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if (obj.Name:find("Chest") or obj.Name:find("Loot") or obj.Name:find("Resource")) and obj:IsA("BasePart") then
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                wait(0.3)
+                
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+            end
+        end
+        
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+    end
+end
+
+function UltimateHack.Functions.Automation.FindChildren()
+    while UltimateHack.Settings.AutoFindChildren and UltimateHack.IsRunning do
+        wait(5)
+        
+        -- ПОИСК ВСЕХ 4 ДЕТЕЙ
+        for _, player in pairs(game.Players:GetPlayers()) do
+            for _, childName in pairs(UltimateHack.ChildrenNames) do
+                if player.Name:find(childName) or (player:FindFirstChild("DisplayName") and player.DisplayName:find(childName)) then
+                    if player.Character then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
+                        Rayfield:Notify({
+                            Title = "Найден ребенок!",
+                            Content = "Телепорт к " .. childName,
+                            Duration = 3,
+                            Image = 4483362458
+                        })
+                        wait(2)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function UltimateHack.Functions.Automation.AntiAFK()
+    while UltimateHack.Settings.AntiAFK and UltimateHack.IsRunning do
+        wait(30)
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(1, 0, 0)
+        end
+    end
+end
+
+function UltimateHack.Functions.Automation.AutoCollectResources()
+    while UltimateHack.Settings.AutoCollectResources and UltimateHack.IsRunning do
+        wait(10)
+        UltimateHack.Functions.Collect.AllResources()
+    end
+end
+
+-- ЧИТЫ ДЛЯ ИГРОКА
+UltimateHack.Functions.Cheats = {}
+
+function UltimateHack.Functions.Cheats.Fly()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character then
+        character.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = Vector3.new(0, 50, 0)
+        bodyVelocity.Parent = character.HumanoidRootPart
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "Режим полета активирован!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+end
+
+function UltimateHack.Functions.Cheats.NoClip()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "NoClip активирован!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+end
+
+function UltimateHack.Functions.Cheats.GodMode()
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if character then
+        character.Humanoid.MaxHealth = math.huge
+        character.Humanoid.Health = math.huge
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "Режим бога активирован!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+end
+
+function UltimateHack.Functions.Cheats.WalkOnSky()
+    local player = game.Players.LocalPlayer
+    if player.Character then
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(0, 500, 0)
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "Ходьба по небу активирована!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+end
+
+function UltimateHack.Functions.Cheats.SetSpeed(speed)
+    local player = game.Players.LocalPlayer
+    if player.Character then
+        player.Character.Humanoid.WalkSpeed = speed
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "Скорость установлена: " .. speed,
+            Duration = 3,
+            Image = 4483362458
+        })
+    end
+end
+
+-- ЭКСПЛОЙД КАРТЫ
+UltimateHack.Functions.AutoExploit = {}
+
+function UltimateHack.Functions.AutoExploit.StartSpiralExploit()
+    Rayfield:Notify({
+        Title = "Эксплойд",
+        Content = "Запуск спирального облета карты...",
+        Duration = 3,
+        Image = 4483362458
+    })
+    
+    local player = game.Players.LocalPlayer
+    local startPos = UltimateHack.FirePosition
+    local radius = UltimateHack.Settings.ExploitRadius
+    local speed = UltimateHack.Settings.ExploitSpeed
+    local maxHeight = 100
+    
+    local angle = 0
+    local height = 0
+    local spiralSteps = 36
+    
+    while UltimateHack.Settings.AutoExploit and UltimateHack.IsRunning do
+        wait(1 / speed)
+        
+        if not player.Character then break end
+        
+        local x = startPos.X + math.cos(angle) * radius * (1 - height / maxHeight)
+        local z = startPos.Z + math.sin(angle) * radius * (1 - height / maxHeight)
+        local y = startPos.Y + height
+        
+        player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(x, y, z))
+        
+        -- СКАНИРУЕМ И ЛУТАЕМ ВСЁ ВОКРУГ
+        UltimateHack.Functions.AutoExploit.ScanArea(Vector3.new(x, y, z))
+        
+        angle = angle + (2 * math.pi / spiralSteps)
+        if angle >= 2 * math.pi then
+            angle = 0
+            height = height + 10
+            if height > maxHeight then
+                height = 0
+                radius = radius - 50
+                if radius <= 100 then
+                    radius = UltimateHack.Settings.ExploitRadius
+                end
+            end
+        end
+    end
+end
+
+function UltimateHack.Functions.AutoExploit.ScanArea(position)
+    local scanRadius = 50
+    
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Position - position).Magnitude < scanRadius then
+            -- ЛУТАЕМ РЕСУРСЫ И СУНДУКИ
+            if obj.Name:find("Chest") or obj.Name:find("Loot") or obj.Name:find("Resource") then
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+            end
+        end
+    end
+end
+
+-- СБОР РЕСУРСОВ (ПОЛНЫЙ КОМПЛЕКТ)
+UltimateHack.Functions.Collect = {}
+
+function UltimateHack.Functions.Collect.AllResources()
+    Rayfield:Notify({
+        Title = "Сбор ресурсов",
+        Content = "Начинаю сбор ВСЕХ ресурсов...",
+        Duration = 3,
+        Image = 4483362458
+    })
+
+    local collectedCount = 0
+    local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+
+    -- ВСЕ КАТЕГОРИИ РЕСУРСОВ
+    local allResources = {
+        -- ДЕРЕВО
+        "Wood", "Log", "Tree", "Stick", "Plank",
+        -- МЕТАЛЛ
+        "Metal", "Scrap", "Iron", "Steel", "Ore", "Canister", "Tire", "Microwave", "Bolt",
+        -- ТОПЛИВО
+        "Fuel", "Coal", "Oil", "Gas", "Petrol",
+        -- ИНСТРУМЕНТЫ
+        "Axe", "Chainsaw", "Rod", "Flute", "Sack", "Tool", "Hammer", "Saw", "Pickaxe",
+        -- ПАТРОНЫ И ОРУЖИЕ
+        "Ammo", "Bullet", "Gun", "Rifle", "Pistol", "Shotgun", "Arrow", "Bow",
+        -- АПТЕЧКИ И МЕДИЦИНА
+        "Bandage", "Medkit", "Med", "Health", "Potion", "Heal",
+        -- ЕДА
+        "Carrot", "Corn", "Pumpkin", "Apple", "Berry", "Morsel", "Steak", "Ribs", 
+        "Cake", "Chili", "Stew", "Mackerel", "Salmon", "Clownfish", "Jellyfish", "Char", "Eel", "Swordfish", "Shark",
+        "Fish", "Meat", "Food", "Bread", "Water", "Drink",
+        -- ПРОЧЕЕ (PELF)
+        "Pelt", "Fur", "Skin", "Hide", "Leather", "Gem", "Crystal", "Diamond", "Ruby", "Emerald", "Gold", "Silver",
+        "Cultist", "Artifact", "Relic", "Treasure", "Coin", "Money"
+    }
+
+    -- Поиск и сбор предметов по всем ключевым словам
+    for _, resourceName in pairs(allResources) do
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Name:lower():find(resourceName:lower()) then
+                -- Телепортируемся к предмету
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                wait(0.05)
+                
+                -- Подбираем предмет
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                
+                collectedCount = collectedCount + 1
+            end
+        end
+    end
+
+    -- Возврат на исходную позицию
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+
+    Rayfield:Notify({
+        Title = "Сбор завершен",
+        Content = "Собрано предметов: " .. collectedCount,
+        Duration = 5,
+        Image = 4483362458
+    })
+end
+
+-- ОТДЕЛЬНЫЕ ФУНКЦИИ СБОРА
+function UltimateHack.Functions.Collect.Wood()
+    UltimateHack.Functions.Collect.SpecificResources({"Wood", "Log", "Tree", "Stick", "Plank"}, "дерева")
+end
+
+function UltimateHack.Functions.Collect.Metal()
+    UltimateHack.Functions.Collect.SpecificResources({"Metal", "Scrap", "Iron", "Steel", "Ore", "Canister", "Tire", "Microwave", "Bolt"}, "металла")
+end
+
+function UltimateHack.Functions.Collect.Fuel()
+    UltimateHack.Functions.Collect.SpecificResources({"Fuel", "Coal", "Oil", "Gas", "Petrol"}, "топлива")
+end
+
+function UltimateHack.Functions.Collect.Tools()
+    UltimateHack.Functions.Collect.SpecificResources({"Axe", "Chainsaw", "Rod", "Flute", "Sack", "Tool", "Hammer", "Saw", "Pickaxe"}, "инструментов")
+end
+
+function UltimateHack.Functions.Collect.Ammo()
+    UltimateHack.Functions.Collect.SpecificResources({"Ammo", "Bullet", "Gun", "Rifle", "Pistol", "Shotgun", "Arrow", "Bow"}, "патронов и оружия")
+end
+
+function UltimateHack.Functions.Collect.Medkits()
+    UltimateHack.Functions.Collect.SpecificResources({"Bandage", "Medkit", "Med", "Health", "Potion", "Heal"}, "аптечек")
+end
+
+function UltimateHack.Functions.Collect.Food()
+    UltimateHack.Functions.Collect.SpecificResources({
+        "Carrot", "Corn", "Pumpkin", "Apple", "Berry", "Morsel", "Steak", "Ribs", 
+        "Cake", "Chili", "Stew", "Mackerel", "Salmon", "Clownfish", "Jellyfish", "Char", "Eel", "Swordfish", "Shark",
+        "Fish", "Meat", "Food", "Bread", "Water", "Drink"
+    }, "еды")
+end
+
+function UltimateHack.Functions.Collect.Pelf()
+    UltimateHack.Functions.Collect.SpecificResources({
+        "Pelt", "Fur", "Skin", "Hide", "Leather", "Gem", "Crystal", "Diamond", "Ruby", "Emerald", "Gold", "Silver",
+        "Cultist", "Artifact", "Relic", "Treasure", "Coin", "Money"
+    }, "прочих ресурсов")
+end
+
+function UltimateHack.Functions.Collect.SpecificResources(resources, resourceName)
+    Rayfield:Notify({
+        Title = "Сбор " .. resourceName,
+        Content = "Начинаю поиск...",
+        Duration = 3,
+        Image = 4483362458
+    })
+
+    local collectedCount = 0
+    local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+
+    for _, resourceType in pairs(resources) do
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and obj.Name:lower():find(resourceType:lower()) then
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                wait(0.05)
+                
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                
+                collectedCount = collectedCount + 1
+            end
+        end
+    end
+
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+
+    Rayfield:Notify({
+        Title = "Сбор завершен",
+        Content = "Собрано " .. resourceName .. ": " .. collectedCount,
+        Duration = 5,
+        Image = 4483362458
+    })
+end
+
+-- ЗАПУСК И ОСТАНОВКА
+function UltimateHack.StartAll()
+    if UltimateHack.IsRunning then
+        Rayfield:Notify({
+            Title = "Внимание",
+            Content = "Хак уже запущен!",
+            Duration = 3,
+            Image = 4483362458
         })
         return
     end
     
-    Rayfield:Notify({
-        Title = "⚡ БЫСТРЫЙ ЛУТ",
-        Content = "Мгновенно открываем " .. totalChests .. " сундуков...",
-        Duration = 4
-    })
+    UltimateHack.IsRunning = true
     
-    for _, item in pairs(workspace:GetDescendants()) do
-        if item:IsA("Model") and item.Name:lower():find("chest") then
-            pcall(function()
-                local openEvent = game:GetService("ReplicatedStorage"):FindFirstChild("OpenChest")
-                if openEvent then
-                    openEvent:FireServer(item)
-                end
-                
-                for _, part in pairs(item:GetDescendants()) do
-                    if part:IsA("ClickDetector") then
-                        fireclickdetector(part)
-                    end
-                end
-                
-                chestsFound = chestsFound + 1
-            end)
-        end
+    -- ЗАПУСКАЕМ ЧИТЫ
+    spawn(function() UltimateHack.Functions.Cheats.GodMode() end)
+    spawn(function() UltimateHack.Functions.Cheats.Fly() end)
+    spawn(function() UltimateHack.Functions.Cheats.SetSpeed(50) end)
+    
+    -- ЗАПУСКАЕМ ОСНОВНЫЕ СИСТЕМЫ
+    spawn(function() UltimateHack.Functions.Auras.KillAura() end)
+    spawn(function() UltimateHack.Functions.Auras.TreeAura() end)
+    spawn(function() UltimateHack.Functions.Automation.AutoFish() end)
+    spawn(function() UltimateHack.Functions.Automation.AutoPlant() end)
+    spawn(function() UltimateHack.Functions.Automation.AutoLoot() end)
+    spawn(function() UltimateHack.Functions.Automation.FindChildren() end)
+    spawn(function() UltimateHack.Functions.Automation.AntiAFK() end)
+    spawn(function() UltimateHack.Functions.Automation.AutoCollectResources() end)
+    
+    if UltimateHack.Settings.AutoExploit then
+        spawn(function() UltimateHack.Functions.AutoExploit.StartSpiralExploit() end)
     end
     
     Rayfield:Notify({
-        Title = "⚡ ЛУТ ВЫПОЛНЕН",
-        Content = "Мгновенно открыто " .. chestsFound .. " сундуков!",
-        Duration = 5
+        Title = "Ultimate Hack",
+        Content = "Все системы активированы!",
+        Duration = 5,
+        Image = 4483362458
     })
 end
 
--- 📦 СИСТЕМА АВТОСОРТИРОВКИ
-function autoSortResources()
-    local fire = findFire()
-    local workbench = workspace:FindFirstChild("Workbench") or workspace:FindFirstChild("CraftingTable")
-    
-    Rayfield:Notify({Title = "📦 СОРТИРОВКА", Content = "Начинаем сортировку ресурсов...", Duration = 4})
-    
-    if fire and getgenv().IS1_Config.AutoComplete.FuelToFire then
-        for _, item in pairs(workspace:GetDescendants()) do
-            if item:IsA("Part") and (item.Name:find("Coal") or item.Name:find("Canister") or item.Name:find("Barrel")) then
-                item.CFrame = (fire:IsA("Model") and fire.PrimaryPart and fire.PrimaryPart.CFrame or fire.CFrame) + Vector3.new(0, 2, 0)
-            end
-        end
-    end
-    
-    if workbench and getgenv().IS1_Config.AutoComplete.CraftToWorkbench then
-        for _, item in pairs(workspace:GetDescendants()) do
-            if item:IsA("Part") and (item.Name:find("Metal") or item.Name:find("Wood") or item.Name:find("Chair")) then
-                item.CFrame = workbench.PrimaryPart.CFrame + Vector3.new(math.random(-3, 3), 2, math.random(-3, 3))
-            end
-        end
-    end
-    
-    if getgenv().StartPosition then
-        for _, item in pairs(workspace:GetDescendants()) do
-            if item:IsA("Part") and (item.Name:find("Axe") or item.Name:find("Rifle") or item.Name:find("Tool") or item.Name:find("Flashlight")) then
-                item.CFrame = CFrame.new(getgenv().StartPosition + Vector3.new(math.random(-2, 2), 1, math.random(-2, 2)))
-            end
-        end
-    end
-    
-    Rayfield:Notify({Title = "✅ СОРТИРОВКА ЗАВЕРШЕНА", Content = "Все ресурсы разложены!", Duration = 4})
+function UltimateHack.StopAll()
+    UltimateHack.IsRunning = false
+    Rayfield:Notify({
+        Title = "Ultimate Hack",
+        Content = "Все системы остановлены!",
+        Duration = 3,
+        Image = 4483362458
+    })
 end
 
--- 📱 ПОЛНЫЙ ИНТЕРФЕЙС
-local MainTab = Window:CreateTab(IS_MOBILE and "🏠 Глвн" or "🏠 Главная")
-createMobileButton(MainTab, "🔥 ТП к костру", teleportToFire)
-createMobileButton(MainTab, "👶 ТП к ребенку", teleportToChild)
+-- ИНТЕРФЕЙС RAYFIELD
 
--- 📦 ВЗЯТИЕ ПРЕДМЕТОВ
-MainTab:CreateSection("📦 Взять предметы")
-local itemTypes = {"Wood", "Metal", "Food", "Tools", "Chairs", "Fuel", "Weapons", "Ammo", "Saplings", "All"}
-for _, itemType in pairs(itemTypes) do
-    createMobileButton(MainTab, "📦 Взять " .. itemType, function() collectItems(itemType) end)
-end
+-- ГЛАВНЫЕ ФУНКЦИИ
+MainTab:CreateSection("Основные функции")
 
--- 🎯 ВЫБОР ИГРОКОВ
-local PlayerTab = Window:CreateTab("🎯 Игроки")
-local selectedPlayersLabel = PlayerTab:CreateLabel("Выбрано: 0 игроков")
-
-function refreshPlayerList()
-    selectedPlayersLabel:Set("Выбрано: " .. tostring(countSelectedPlayers()) .. " игроков")
-end
-
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        PlayerTab:CreateToggle({
-            Name = "👤 " .. player.Name,
-            CurrentValue = false,
-            Callback = function(Value)
-                selectedPlayers[player.Name] = Value
-                refreshPlayerList()
-            end
-        })
-    end
-end
-
-createMobileButton(PlayerTab, "🎯 ТП ВЫБРАННЫХ", teleportSelectedPlayersToFire)
-createMobileButton(PlayerTab, "💥 ТП ВСЕХ", teleportAllPlayersToFire)
-
--- 🚀 ЭКСПЛОИТ
-local ExploreTab = Window:CreateTab("🚀 Эксплоит")
-createMobileToggle(ExploreTab, "Авто-эксплоит карты", function(Value)
-    getgenv().IS1_Config.AutoExplore.Enabled = Value
-    if Value then 
-        startAutoExplore()
-        Rayfield:Notify({Title = "🚀 ЭКСПЛОИТ", Content = "Автообход карты запущен!", Duration = 4})
-    end
-end)
-
-createMobileButton(ExploreTab, "📦 Авто-сортировка", autoSortResources)
-
--- 🌳 ПОСАДКА
-local PlantTab = Window:CreateTab("🌳 Посадка")
-createMobileToggle(PlantTab, "Авто-посадка деревьев", function(Value)
-    getgenv().IS1_Config.AutoPlant.Enabled = Value
-    if Value then 
-        startAutoPlanting()
-        Rayfield:Notify({Title = "🌳 АВТОСАЖАНИЕ", Content = "Сбор саженцев и посадка!", Duration = 4})
-    else
-        stopAutoPlanting()
-    end
-end)
-
-PlantTab:CreateDropdown({
-    Name = "Режим посадки",
-    Options = {"TreeInTree", "Wall"},
-    CurrentOption = "TreeInTree",
-    Callback = function(Option) getgenv().IS1_Config.AutoPlant.Mode = Option end
+local StartButton = MainTab:CreateButton({
+    Name = "🚀 Запустить все системы",
+    Callback = function()
+        UltimateHack.StartAll()
+    end,
 })
 
--- 🎒 АВТОЛУТ
-local LootTab = Window:CreateTab("🎒 Автолут")
-createMobileToggle(LootTab, "Авто-лут сундуков", function(Value)
-    getgenv().IS1_Config.AutoLoot.Enabled = Value
-    if Value then
-        startAutoLoot()
-    else
-        if lootConnection then lootConnection:Disconnect() end
-    end
-end)
-
-createMobileButton(LootTab, "⚡ Быстрый лут всех", quickLootAllChests)
-
-LootTab:CreateToggle({
-    Name = "Мгновенное открытие",
-    CurrentValue = true,
-    Callback = function(Value) getgenv().IS1_Config.AutoLoot.UseInstantOpen = Value end
+local StopButton = MainTab:CreateButton({
+    Name = "🛑 Остановить все системы",
+    Callback = function()
+        UltimateHack.StopAll()
+    end,
 })
 
--- 🦅 ПОЛЕТ
-local FlyTab = Window:CreateTab("🦅 Полёт")
-createMobileToggle(FlyTab, "Включить полет", function(Value)
-    getgenv().IS1_Config.FlyMode.Enabled = Value
-    toggleFlyMode(Value)
-end)
+MainTab:CreateSection("Телепортация")
 
-FlyTab:CreateSlider({
-    Name = "Скорость полета",
-    Range = {10, 200},
-    Increment = 10,
-    Suffix = "studs",
-    CurrentValue = IS_MOBILE and 40 or 50,
-    Callback = function(Value) getgenv().IS1_Config.FlyMode.Speed = Value end
+local SetFireButton = MainTab:CreateButton({
+    Name = "📍 Установить позицию костра",
+    Callback = function()
+        UltimateHack.Functions.Teleport.SetFirePosition()
+    end,
 })
 
--- 🏃 ДВИЖЕНИЕ
-local MoveTab = Window:CreateTab("🏃 Движение")
-MoveTab:CreateSlider({
-    Name = "Скорость ходьбы",
+local TPToFireButton = MainTab:CreateButton({
+    Name = "🔥 ТП к костру",
+    Callback = function()
+        UltimateHack.Functions.Teleport.ToFire()
+    end,
+})
+
+local TPToChildButton = MainTab:CreateButton({
+    Name = "👶 ТП к ребенку",
+    Callback = function()
+        UltimateHack.Functions.Teleport.ToChild()
+    end,
+})
+
+local TPAllButton = MainTab:CreateButton({
+    Name = "👥 ТП всех к костру",
+    Callback = function()
+        UltimateHack.Functions.Teleport.AllToFire()
+    end,
+})
+
+-- АУРЫ
+PlayerTab:CreateSection("Ауры")
+
+local KillAuraToggle = PlayerTab:CreateToggle({
+    Name = "⚔️ Киллаура",
+    CurrentValue = UltimateHack.Settings.KillAura,
+    Flag = "KillAuraToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.KillAura = Value
+    end,
+})
+
+local TreeAuraToggle = PlayerTab:CreateToggle({
+    Name = "🪓 Вырубка деревьев",
+    CurrentValue = UltimateHack.Settings.TreeAura,
+    Flag = "TreeAuraToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.TreeAura = Value
+    end,
+})
+
+local KillAuraRadiusSlider = PlayerTab:CreateSlider({
+    Name = "📏 Радиус киллауры",
+    Range = {10, 100},
+    Increment = 5,
+    Suffix = "ед.",
+    CurrentValue = UltimateHack.Settings.KillAuraRadius,
+    Flag = "KillAuraRadiusSlider",
+    Callback = function(Value)
+        UltimateHack.Settings.KillAuraRadius = Value
+    end,
+})
+
+PlayerTab:CreateSection("Читы")
+
+local FlyButton = PlayerTab:CreateButton({
+    Name = "🦅 Включить полет",
+    Callback = function()
+        UltimateHack.Functions.Cheats.Fly()
+    end,
+})
+
+local NoClipButton = PlayerTab:CreateButton({
+    Name = "👻 Включить NoClip",
+    Callback = function()
+        UltimateHack.Functions.Cheats.NoClip()
+    end,
+})
+
+local GodModeButton = PlayerTab:CreateButton({
+    Name = "🛡️ Включить God Mode",
+    Callback = function()
+        UltimateHack.Functions.Cheats.GodMode()
+    end,
+})
+
+local WalkOnSkyButton = PlayerTab:CreateButton({
+    Name = "☁️ Ходить по небу",
+    Callback = function()
+        UltimateHack.Functions.Cheats.WalkOnSky()
+    end,
+})
+
+local SpeedSlider = PlayerTab:CreateSlider({
+    Name = "💨 Скорость передвижения",
     Range = {16, 100},
     Increment = 5,
-    Suffix = "studs",
+    Suffix = "ед.",
     CurrentValue = 16,
+    Flag = "SpeedSlider",
     Callback = function(Value)
-        getgenv().IS1_Config.Movement.WalkSpeed = Value
-        Character.Humanoid.WalkSpeed = Value
-    end
+        UltimateHack.Functions.Cheats.SetSpeed(Value)
+    end,
 })
 
-MoveTab:CreateToggle({
-    Name = "Ходить по небу",
+-- АВТОМАТЫ
+AutoTab:CreateSection("Автоматизация")
+
+local AutoFishToggle = AutoTab:CreateToggle({
+    Name = "🎣 Авторыбалка",
+    CurrentValue = UltimateHack.Settings.AutoFish,
+    Flag = "AutoFishToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoFish = Value
+    end,
+})
+
+local AutoPlantToggle = AutoTab:CreateToggle({
+    Name = "🌳 Автопосадка деревьев",
+    CurrentValue = UltimateHack.Settings.AutoPlant,
+    Flag = "AutoPlantToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoPlant = Value
+    end,
+})
+
+local AutoLootToggle = AutoTab:CreateToggle({
+    Name = "📦 Автолут сундуков",
+    CurrentValue = UltimateHack.Settings.AutoLoot,
+    Flag = "AutoLootToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoLoot = Value
+    end,
+})
+
+local AutoFindChildrenToggle = AutoTab:CreateToggle({
+    Name = "👶 Автопоиск детей",
+    CurrentValue = UltimateHack.Settings.AutoFindChildren,
+    Flag = "AutoFindChildrenToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoFindChildren = Value
+    end,
+})
+
+local AutoCollectToggle = AutoTab:CreateToggle({
+    Name = "🔄 Автосбор ресурсов",
+    CurrentValue = UltimateHack.Settings.AutoCollectResources,
+    Flag = "AutoCollectToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoCollectResources = Value
+    end,
+})
+
+local AntiAFKToggle = AutoTab:CreateToggle({
+    Name = "⏰ Анти-АФК",
+    CurrentValue = UltimateHack.Settings.AntiAFK,
+    Flag = "AntiAFKToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AntiAFK = Value
+    end,
+})
+
+-- ЭКСПЛОЙД
+ExploitTab:CreateSection("Эксплойд карты")
+
+local ExploitToggle = ExploitTab:CreateToggle({
+    Name = "🛸 Автоэксплойд карты",
+    CurrentValue = UltimateHack.Settings.AutoExploit,
+    Flag = "ExploitToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoExploit = Value
+    end,
+})
+
+local ExploitRadiusSlider = ExploitTab:CreateSlider({
+    Name = "📏 Радиус эксплойда",
+    Range = {100, 5000},
+    Increment = 100,
+    Suffix = "ед.",
+    CurrentValue = UltimateHack.Settings.ExploitRadius,
+    Flag = "ExploitRadiusSlider",
+    Callback = function(Value)
+        UltimateHack.Settings.ExploitRadius = Value
+    end,
+})
+
+local ExploitSpeedSlider = ExploitTab:CreateSlider({
+    Name = "⚡ Скорость эксплойда",
+    Range = {10, 100},
+    Increment = 5,
+    Suffix = "ед.",
+    CurrentValue = UltimateHack.Settings.ExploitSpeed,
+    Flag = "ExploitSpeedSlider",
+    Callback = function(Value)
+        UltimateHack.Settings.ExploitSpeed = Value
+    end,
+})
+
+-- СБОР РЕСУРСОВ
+CollectTab:CreateSection("Сбор ресурсов")
+
+local CollectAllButton = CollectTab:CreateButton({
+    Name = "🗲 Собрать ВСЕ предметы",
+    Callback = function()
+        UltimateHack.Functions.Collect.AllResources()
+    end,
+})
+
+CollectTab:CreateSection("Отдельные категории")
+
+local CollectWoodButton = CollectTab:CreateButton({
+    Name = "🪵 Собрать дерево",
+    Callback = function()
+        UltimateHack.Functions.Collect.Wood()
+    end,
+})
+
+local CollectMetalButton = CollectTab:CreateButton({
+    Name = "🔩 Собрать металл",
+    Callback = function()
+        UltimateHack.Functions.Collect.Metal()
+    end,
+})
+
+local CollectFuelButton = CollectTab:CreateButton({
+    Name = "⛽ Собрать топливо",
+    Callback = function()
+        UltimateHack.Functions.Collect.Fuel()
+    end,
+})
+
+local CollectToolsButton = CollectTab:CreateButton({
+    Name = "🛠️ Собрать инструменты",
+    Callback = function()
+        UltimateHack.Functions.Collect.Tools()
+    end,
+})
+
+local CollectAmmoButton = CollectTab:CreateButton({
+    Name = "🔫 Собрать патроны",
+    Callback = function()
+        UltimateHack.Functions.Collect.Ammo()
+    end,
+})
+
+local CollectMedkitsButton = CollectTab:CreateButton({
+    Name = "💊 Собрать аптечки",
+    Callback = function()
+        UltimateHack.Functions.Collect.Medkits()
+    end,
+})
+
+local CollectFoodButton = CollectTab:CreateButton({
+    Name = "🍖 Собрать еду",
+    Callback = function()
+        UltimateHack.Functions.Collect.Food()
+    end,
+})
+
+local CollectPelfButton = CollectTab:CreateButton({
+    Name = "💎 Собрать прочее (Pelf)",
+    Callback = function()
+        UltimateHack.Functions.Collect.Pelf()
+    end,
+})
+
+-- ОПТИМИЗАЦИЯ
+OptimizationTab:CreateSection("Настройки графики")
+
+local FPSSlider = OptimizationTab:CreateSlider({
+    Name = "🎮 Лимит FPS",
+    Range = {30, 360},
+    Increment = 10,
+    Suffix = "FPS",
+    CurrentValue = 60,
+    Flag = "FPSSlider",
+    Callback = function(Value)
+        UltimateHack.Functions.Optimization.SetFPS(Value)
+    end,
+})
+
+local QualitySlider = OptimizationTab:CreateSlider({
+    Name = "🖼️ Уровень качества",
+    Range = {1, 10},
+    Increment = 1,
+    Suffix = "уровень",
+    CurrentValue = 1,
+    Flag = "QualitySlider",
+    Callback = function(Value)
+        UltimateHack.Functions.Optimization.SetQuality(Value)
+    end,
+})
+
+local ShadowsToggle = OptimizationTab:CreateToggle({
+    Name = "🌑 Тени",
     CurrentValue = false,
+    Flag = "ShadowsToggle",
     Callback = function(Value)
-        if Value then
-            Character.HumanoidRootPart.CFrame = Character.HumanoidRootPart.CFrame + Vector3.new(0, 100, 0)
-        end
-    end
+        UltimateHack.Functions.Optimization.ToggleShadows()
+    end,
 })
 
--- 🔧 СИСТЕМНЫЕ ФУНКЦИИ
-Players.PlayerAdded:Connect(function(player)
-    wait(2)
-    refreshPlayerList()
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    selectedPlayers[player.Name] = nil
-    refreshPlayerList()
-end)
-
-LocalPlayer.CharacterAdded:Connect(function(newChar)
-    Character = newChar
-    wait(3)
-    if getgenv().IS1_Config then
-        Character.Humanoid.WalkSpeed = getgenv().IS1_Config.Movement.WalkSpeed or 16
-    end
-end)
+local FogToggle = OptimizationTab:CreateToggle({
+    Name = "🌫️ Туман",
+    CurrentValue = false,
+    Flag = "FogToggle",
+    Callback = function(Value)
+        UltimateHack.Functions.Optimization.ToggleFog()
+    end,
+})
 
 Rayfield:Notify({
-    Title = "🎉 ПОЛНЫЙ СКРИПТ ЗАГРУЖЕН!",
-    Content = "Все функции активны! Оптимизация для мобильных и ПК!",
-    Duration = 6
+    Title = "99 Nights Ultimate Hack",
+    Content = "Успешно загружен! v3.0 - ПОЛНАЯ ВЕРСИЯ",
+    Duration = 6,
+    Image = 4483362458
 })
 
-print("✅ ULTIMATE COMPLETE FINAL SCRIPT LOADED!")
+return UltimateHack
