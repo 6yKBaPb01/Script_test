@@ -6,7 +6,6 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
    Name = "99 NIGHTS ULTIMATE HACK",
    LoadingTitle = "I.S.-1 Loading...",
-   LoadingSubtitle = "by Infection System",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = "99NightsHack",
