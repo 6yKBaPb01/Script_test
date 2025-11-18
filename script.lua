@@ -1,27 +1,33 @@
+-- 99 ночей в лесу - ULTIMATE COMPLETE FINAL EDITION
+-- ВСЕ ФУНКЦИИ ВКЛЮЧЕНЫ: АВТОЭКСПЛОИТ, ПОЛЕТ, ТЕЛЕПОРТЫ, АВТОСБОР, АВТОСАЖАНИЕ, АВТОЛУТ, ВЫБОР ИГРОКОВ
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
+-- ОПРЕДЕЛЯЕМ ПЛАТФОРМУ
+local IS_MOBILE = UserInputService.TouchEnabled
+local IS_PC = not IS_MOBILE
+
 -- ЖДЕМ ЗАГРУЗКИ
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 wait(2)
 
--- КОНФИГ
+-- ПОЛНЫЙ КОНФИГ
 getgenv().IS1_Config = {
     AutoExplore = {
         Enabled = false, 
-        Speed = 100, 
-        Height = 50,
+        Speed = IS_MOBILE and 80 or 100, 
+        Height = IS_MOBILE and 30 or 50,
         CollectResources = true,
         FindChild = true,
-        MapBounds = 2000
+        MapBounds = IS_MOBILE and 1000 or 2000
     },
     FlyMode = {
         Enabled = false, 
-        Speed = 50, 
+        Speed = IS_MOBILE and 40 or 50, 
         Noclip = true
     },
     Movement = {
@@ -36,8 +42,15 @@ getgenv().IS1_Config = {
     AutoPlant = {
         Enabled = false,
         Mode = "TreeInTree",
-        Speed = 2,
+        Speed = IS_MOBILE and 3 or 2,
         CollectSaplings = true
+    },
+    AutoLoot = {
+        Enabled = false,
+        Radius = IS_MOBILE and 30 or 50,
+        UseInstantOpen = true,
+        ShowProgress = true,
+        ReturnDelay = 2
     },
     AutoComplete = {
         Enabled = true,
@@ -47,21 +60,39 @@ getgenv().IS1_Config = {
     }
 }
 
--- ПЕРЕМЕННЫЕ
-local flyConnection, noclipConnection, exploreConnection, plantConnection
+-- ВСЕ ПЕРЕМЕННЫЕ
+local flyConnection, noclipConnection, exploreConnection, plantConnection, lootConnection
 local bodyVelocity, bodyGyro
 local selectedPlayers = {}
 getgenv().StartPosition = nil
 getgenv().ChildLocation = nil
+getgenv().LootStartPosition = nil
 
 -- ЗАГРУЗКА RAYFIELD
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield", true))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "99 ночей - ULTIMATE",
+    Name = IS_MOBILE and "99 ночей 📱" or "99 ночей - ULTIMATE",
     LoadingTitle = "Загрузка...",
+    LoadingSubtitle = IS_MOBILE and "Mobile Optimized" or "PC Edition",
     ConfigurationSaving = {Enabled = false}
 })
+
+-- 🔧 АДАПТИВНЫЕ ФУНКЦИИ ДЛЯ ИНТЕРФЕЙСА
+function createMobileButton(tab, name, callback)
+    return tab:CreateButton({
+        Name = IS_MOBILE and string.sub(name, 1, 15) or name,
+        Callback = callback
+    })
+end
+
+function createMobileToggle(tab, name, callback)
+    return tab:CreateToggle({
+        Name = IS_MOBILE and string.sub(name, 1, 20) or name,
+        CurrentValue = false,
+        Callback = callback
+    })
+end
 
 -- 🔧 ОСНОВНЫЕ ФУНКЦИИ
 function findFire()
@@ -106,7 +137,7 @@ function teleportToChild()
     end
 end
 
--- 📦 СИСТЕМА СБОРА ПРЕДМЕТОВ
+-- 📦 ПОЛНАЯ СИСТЕМА СБОРА ПРЕДМЕТОВ
 function collectItems(itemType)
     local collected = 0
     for _, item in pairs(workspace:GetDescendants()) do
@@ -152,13 +183,46 @@ function collectItems(itemType)
     })
 end
 
--- 🎯 СИСТЕМА ТП ИГРОКОВ
+-- 🎯 ПОЛНАЯ СИСТЕМА ВЫБОРА И ТП ИГРОКОВ
+function updatePlayerSelection()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and not selectedPlayers[player.Name] then
+            selectedPlayers[player.Name] = false
+        end
+    end
+end
+
+function countSelectedPlayers()
+    local count = 0
+    for _, isSelected in pairs(selectedPlayers) do
+        if isSelected then count = count + 1 end
+    end
+    return count
+end
+
 function teleportSelectedPlayersToFire()
+    local selectedCount = countSelectedPlayers()
+    
+    if selectedCount == 0 then
+        Rayfield:Notify({
+            Title = "❌ НЕТ ВЫБРАННЫХ",
+            Content = "Сначала выбери игроков для ТП!",
+            Duration = 4
+        })
+        return
+    end
+    
     local fire = findFire()
     if not fire then return end
     
     local targetPosition = fire:IsA("Model") and fire.PrimaryPart and fire.PrimaryPart.Position or fire.Position
     local teleportedCount = 0
+    
+    Rayfield:Notify({
+        Title = "🎯 ТП ВЫБРАННЫХ",
+        Content = "Телепортируем " .. selectedCount .. " игроков...",
+        Duration = 4
+    })
     
     for playerName, shouldTeleport in pairs(selectedPlayers) do
         if shouldTeleport then
@@ -169,15 +233,15 @@ function teleportSelectedPlayersToFire()
                         math.random(-3, 3), 3, math.random(-3, 3)
                     ))
                     teleportedCount = teleportedCount + 1
-                    wait(0.1)
+                    wait(0.2)
                 end)
             end
         end
     end
     
     Rayfield:Notify({
-        Title = "🎯 ВЫБОРОЧНЫЙ ТП",
-        Content = "Телепортировано " .. teleportedCount .. " выбранных игроков!",
+        Title = "✅ ТП ВЫПОЛНЕН",
+        Content = "Успешно телепортировано " .. teleportedCount .. " игроков!",
         Duration = 5
     })
 end
@@ -208,7 +272,7 @@ function teleportAllPlayersToFire()
     })
 end
 
--- 🦅 СИСТЕМА ПОЛЕТА
+-- 🦅 ПОЛНАЯ СИСТЕМА ПОЛЕТА
 function toggleFlyMode(state)
     if state then
         if flyConnection then flyConnection:Disconnect() end
@@ -228,12 +292,17 @@ function toggleFlyMode(state)
             bodyGyro.CFrame = workspace.CurrentCamera.CFrame
             
             local direction = Vector3.new()
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + workspace.CurrentCamera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - workspace.CurrentCamera.CFrame.LookVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - workspace.CurrentCamera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + workspace.CurrentCamera.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
+            
+            if IS_PC then
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + workspace.CurrentCamera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - workspace.CurrentCamera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - workspace.CurrentCamera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + workspace.CurrentCamera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
+            else
+                direction = workspace.CurrentCamera.CFrame.LookVector
+            end
             
             bodyVelocity.Velocity = direction * getgenv().IS1_Config.FlyMode.Speed
         end)
@@ -246,7 +315,11 @@ function toggleFlyMode(state)
             end)
         end
         
-        Rayfield:Notify({Title = "🦅 ПОЛЕТ АКТИВЕН", Content = "WASD + Space/Shift для управления", Duration = 4})
+        Rayfield:Notify({
+            Title = IS_MOBILE and "🦅 ПОЛЕТ" or "🦅 ПОЛЕТ АКТИВЕН",
+            Content = IS_MOBILE and "Двигайтесь вперед" or "WASD + Space/Shift для управления",
+            Duration = 4
+        })
     else
         if flyConnection then flyConnection:Disconnect() flyConnection = nil end
         if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
@@ -259,7 +332,7 @@ function toggleFlyMode(state)
     end
 end
 
--- 🚀 СИСТЕМА АВТОЭКСПЛОИТА
+-- 🚀 ПОЛНАЯ СИСТЕМА АВТОЭКСПЛОИТА
 function startAutoExplore()
     local center = findFire() or Character.HumanoidRootPart
     if not center then return end
@@ -313,7 +386,7 @@ function startAutoExplore()
     end)
 end
 
--- 🌳 СИСТЕМА АВТОСАЖАНИЯ С ЗАБОРОМ САЖЕНЦЕВ
+-- 🌳 ПОЛНАЯ СИСТЕМА АВТОСАЖАНИЯ
 function startAutoPlanting()
     local fire = findFire()
     if not fire then
@@ -330,7 +403,7 @@ function startAutoPlanting()
             return
         end
         
-        -- 🔧 СНАЧАЛА СОБИРАЕМ САЖЕНЦЫ С КАРТЫ
+        -- СБОР САЖЕНЦЕВ С КАРТЫ
         if getgenv().IS1_Config.AutoPlant.CollectSaplings then
             for _, item in pairs(workspace:GetDescendants()) do
                 if item:IsA("Part") and item:FindFirstChild("ClickDetector") then
@@ -347,14 +420,12 @@ function startAutoPlanting()
             end
         end
         
-        -- 🌳 ЗАТЕМ САЖАЕМ ДЕРЕВЬЯ
+        -- САЖАЕМ ДЕРЕВЬЯ
         if getgenv().IS1_Config.AutoPlant.Mode == "TreeInTree" then
-            -- ДЕРЕВО В ДЕРЕВЕ
             local plantPosition = firePosition + Vector3.new(5, 0, 0)
             Character.HumanoidRootPart.CFrame = CFrame.new(plantPosition)
             
             pcall(function()
-                -- ПОПЫТКА ПОСАДКИ РАЗНЫМИ СПОСОБАМИ
                 local plantTool = LocalPlayer.Backpack:FindFirstChild("PlantTool") or Character:FindFirstChild("PlantTool")
                 if plantTool then
                     plantTool:Activate()
@@ -367,7 +438,6 @@ function startAutoPlanting()
             end)
             
         elseif getgenv().IS1_Config.AutoPlant.Mode == "Wall" then
-            -- СТЕНА ИЗ ДЕРЕВЬЕВ
             for i = 1, 8 do
                 if not getgenv().IS1_Config.AutoPlant.Enabled then break end
                 
@@ -401,6 +471,150 @@ function stopAutoPlanting()
     end
 end
 
+-- 🎒 ПОЛНАЯ СИСТЕМА АВТОЛУТА
+function startAutoLoot()
+    getgenv().LootStartPosition = Character.HumanoidRootPart.Position
+    local chestsFound = 0
+    local totalChests = 0
+    
+    local allChests = {}
+    for _, item in pairs(workspace:GetDescendants()) do
+        if item:IsA("Model") and (item.Name:lower():find("chest") or item.Name:lower():find("box") or item.Name:lower():find("cache")) then
+            table.insert(allChests, item)
+        end
+    end
+    
+    totalChests = #allChests
+    
+    if totalChests == 0 then
+        Rayfield:Notify({
+            Title = "❌ СУНДУКОВ НЕТ",
+            Content = "На карте не найдено сундуков!",
+            Duration = 4
+        })
+        getgenv().IS1_Config.AutoLoot.Enabled = false
+        return
+    end
+    
+    Rayfield:Notify({
+        Title = "🎒 НАЧИНАЕМ ЛУТ",
+        Content = "Найдено " .. totalChests .. " сундуков!",
+        Duration = 4
+    })
+    
+    lootConnection = RunService.Heartbeat:Connect(function()
+        if not getgenv().IS1_Config.AutoLoot.Enabled then
+            if lootConnection then lootConnection:Disconnect() end
+            return
+        end
+        
+        local remainingChests = 0
+        
+        for _, chest in pairs(allChests) do
+            if not getgenv().IS1_Config.AutoLoot.Enabled then break end
+            
+            local distance = (Character.HumanoidRootPart.Position - chest:GetPivot().Position).Magnitude
+            if distance <= getgenv().IS1_Config.AutoLoot.Radius then
+                remainingChests = remainingChests + 1
+                
+                if getgenv().IS1_Config.AutoLoot.UseInstantOpen then
+                    pcall(function()
+                        local openEvent = game:GetService("ReplicatedStorage"):FindFirstChild("OpenChest")
+                        if openEvent then
+                            openEvent:FireServer(chest)
+                            chestsFound = chestsFound + 1
+                        else
+                            for _, part in pairs(chest:GetDescendants()) do
+                                if part:IsA("ClickDetector") then
+                                    fireclickdetector(part)
+                                    chestsFound = chestsFound + 1
+                                    break
+                                end
+                            end
+                        end
+                    end)
+                else
+                    local originalPosition = Character.HumanoidRootPart.Position
+                    Character.HumanoidRootPart.CFrame = chest:GetPivot()
+                    
+                    pcall(function()
+                        for _, part in pairs(chest:GetDescendants()) do
+                            if part:IsA("ClickDetector") then
+                                fireclickdetector(part)
+                                chestsFound = chestsFound + 1
+                                break
+                            end
+                        end
+                    end)
+                    
+                    Character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+                end
+            end
+        end
+        
+        if remainingChests == 0 then
+            getgenv().IS1_Config.AutoLoot.Enabled = false
+            
+            Rayfield:Notify({
+                Title = "✅ ЛУТ ЗАВЕРШЕН",
+                Content = "Вскрыто " .. chestsFound .. " из " .. totalChests .. " сундуков!",
+                Duration = 6
+            })
+        end
+    end)
+end
+
+function quickLootAllChests()
+    local chestsFound = 0
+    local totalChests = 0
+    
+    for _, item in pairs(workspace:GetDescendants()) do
+        if item:IsA("Model") and item.Name:lower():find("chest") then
+            totalChests = totalChests + 1
+        end
+    end
+    
+    if totalChests == 0 then
+        Rayfield:Notify({
+            Title = "❌ СУНДУКОВ НЕТ",
+            Content = "На карте не найдено сундуков!",
+            Duration = 4
+        })
+        return
+    end
+    
+    Rayfield:Notify({
+        Title = "⚡ БЫСТРЫЙ ЛУТ",
+        Content = "Мгновенно открываем " .. totalChests .. " сундуков...",
+        Duration = 4
+    })
+    
+    for _, item in pairs(workspace:GetDescendants()) do
+        if item:IsA("Model") and item.Name:lower():find("chest") then
+            pcall(function()
+                local openEvent = game:GetService("ReplicatedStorage"):FindFirstChild("OpenChest")
+                if openEvent then
+                    openEvent:FireServer(item)
+                end
+                
+                for _, part in pairs(item:GetDescendants()) do
+                    if part:IsA("ClickDetector") then
+                        fireclickdetector(part)
+                    end
+                end
+                
+                chestsFound = chestsFound + 1
+            end)
+        end
+    end
+    
+    Rayfield:Notify({
+        Title = "⚡ ЛУТ ВЫПОЛНЕН",
+        Content = "Мгновенно открыто " .. chestsFound .. " сундуков!",
+        Duration = 5
+    })
+end
+
 -- 📦 СИСТЕМА АВТОСОРТИРОВКИ
 function autoSortResources()
     local fire = findFire()
@@ -409,7 +623,6 @@ function autoSortResources()
     Rayfield:Notify({Title = "📦 СОРТИРОВКА", Content = "Начинаем сортировку ресурсов...", Duration = 4})
     
     if fire and getgenv().IS1_Config.AutoComplete.FuelToFire then
-        -- ТОПЛИВО В КОСТЕР
         for _, item in pairs(workspace:GetDescendants()) do
             if item:IsA("Part") and (item.Name:find("Coal") or item.Name:find("Canister") or item.Name:find("Barrel")) then
                 item.CFrame = (fire:IsA("Model") and fire.PrimaryPart and fire.PrimaryPart.CFrame or fire.CFrame) + Vector3.new(0, 2, 0)
@@ -418,7 +631,6 @@ function autoSortResources()
     end
     
     if workbench and getgenv().IS1_Config.AutoComplete.CraftToWorkbench then
-        -- РЕСУРСЫ В ВЕРСТАК
         for _, item in pairs(workspace:GetDescendants()) do
             if item:IsA("Part") and (item.Name:find("Metal") or item.Name:find("Wood") or item.Name:find("Chair")) then
                 item.CFrame = workbench.PrimaryPart.CFrame + Vector3.new(math.random(-3, 3), 2, math.random(-3, 3))
@@ -426,7 +638,6 @@ function autoSortResources()
         end
     end
     
-    -- ТУЛЫ В СТАРТОВУЮ ПОЗИЦИЮ
     if getgenv().StartPosition then
         for _, item in pairs(workspace:GetDescendants()) do
             if item:IsA("Part") and (item.Name:find("Axe") or item.Name:find("Rifle") or item.Name:find("Tool") or item.Name:find("Flashlight")) then
@@ -438,68 +649,65 @@ function autoSortResources()
     Rayfield:Notify({Title = "✅ СОРТИРОВКА ЗАВЕРШЕНА", Content = "Все ресурсы разложены!", Duration = 4})
 end
 
--- 📱 ИНТЕРФЕЙС
-local MainTab = Window:CreateTab("🏠 Главная")
-
-MainTab:CreateButton({Name = "🔥 ТП к костру", Callback = teleportToFire})
-MainTab:CreateButton({Name = "👶 ТП к ребенку", Callback = teleportToChild})
+-- 📱 ПОЛНЫЙ ИНТЕРФЕЙС
+local MainTab = Window:CreateTab(IS_MOBILE and "🏠 Глвн" or "🏠 Главная")
+createMobileButton(MainTab, "🔥 ТП к костру", teleportToFire)
+createMobileButton(MainTab, "👶 ТП к ребенку", teleportToChild)
 
 -- 📦 ВЗЯТИЕ ПРЕДМЕТОВ
 MainTab:CreateSection("📦 Взять предметы")
 local itemTypes = {"Wood", "Metal", "Food", "Tools", "Chairs", "Fuel", "Weapons", "Ammo", "Saplings", "All"}
 for _, itemType in pairs(itemTypes) do
-    MainTab:CreateButton({
-        Name = "📦 Взять " .. itemType,
-        Callback = function() collectItems(itemType) end
-    })
+    createMobileButton(MainTab, "📦 Взять " .. itemType, function() collectItems(itemType) end)
 end
 
 -- 🎯 ВЫБОР ИГРОКОВ
 local PlayerTab = Window:CreateTab("🎯 Игроки")
+local selectedPlayersLabel = PlayerTab:CreateLabel("Выбрано: 0 игроков")
+
+function refreshPlayerList()
+    selectedPlayersLabel:Set("Выбрано: " .. tostring(countSelectedPlayers()) .. " игроков")
+end
+
 for _, player in pairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         PlayerTab:CreateToggle({
             Name = "👤 " .. player.Name,
             CurrentValue = false,
-            Callback = function(Value) selectedPlayers[player.Name] = Value end
+            Callback = function(Value)
+                selectedPlayers[player.Name] = Value
+                refreshPlayerList()
+            end
         })
     end
 end
 
-PlayerTab:CreateButton({Name = "🎯 ТП ВЫБРАННЫХ В КОСТЕР", Callback = teleportSelectedPlayersToFire})
-PlayerTab:CreateButton({Name = "💥 ТП ВСЕХ В КОСТЕР", Callback = teleportAllPlayersToFire})
+createMobileButton(PlayerTab, "🎯 ТП ВЫБРАННЫХ", teleportSelectedPlayersToFire)
+createMobileButton(PlayerTab, "💥 ТП ВСЕХ", teleportAllPlayersToFire)
 
 -- 🚀 ЭКСПЛОИТ
 local ExploreTab = Window:CreateTab("🚀 Эксплоит")
-ExploreTab:CreateToggle({
-    Name = "Авто-эксплоит карты", 
-    CurrentValue = false,
-    Callback = function(Value)
-        getgenv().IS1_Config.AutoExplore.Enabled = Value
-        if Value then 
-            startAutoExplore()
-            Rayfield:Notify({Title = "🚀 ЭКСПЛОИТ", Content = "Автообход карты запущен!", Duration = 4})
-        end
+createMobileToggle(ExploreTab, "Авто-эксплоит карты", function(Value)
+    getgenv().IS1_Config.AutoExplore.Enabled = Value
+    if Value then 
+        startAutoExplore()
+        Rayfield:Notify({Title = "🚀 ЭКСПЛОИТ", Content = "Автообход карты запущен!", Duration = 4})
     end
-})
+end)
 
-ExploreTab:CreateButton({Name = "📦 Авто-сортировка", Callback = autoSortResources})
+createMobileButton(ExploreTab, "📦 Авто-сортировка", autoSortResources)
 
 -- 🌳 ПОСАДКА
 local PlantTab = Window:CreateTab("🌳 Посадка")
-PlantTab:CreateToggle({
-    Name = "Включить авто-посадку",
-    CurrentValue = false,
-    Callback = function(Value)
-        getgenv().IS1_Config.AutoPlant.Enabled = Value
-        if Value then 
-            startAutoPlanting()
-            Rayfield:Notify({Title = "🌳 АВТОСАЖАНИЕ", Content = "Сбор саженцев и посадка!", Duration = 4})
-        else
-            stopAutoPlanting()
-        end
+createMobileToggle(PlantTab, "Авто-посадка деревьев", function(Value)
+    getgenv().IS1_Config.AutoPlant.Enabled = Value
+    if Value then 
+        startAutoPlanting()
+        Rayfield:Notify({Title = "🌳 АВТОСАЖАНИЕ", Content = "Сбор саженцев и посадка!", Duration = 4})
+    else
+        stopAutoPlanting()
     end
-})
+end)
 
 PlantTab:CreateDropdown({
     Name = "Режим посадки",
@@ -508,21 +716,39 @@ PlantTab:CreateDropdown({
     Callback = function(Option) getgenv().IS1_Config.AutoPlant.Mode = Option end
 })
 
-PlantTab:CreateToggle({
-    Name = "Собирать саженцы с карты",
+-- 🎒 АВТОЛУТ
+local LootTab = Window:CreateTab("🎒 Автолут")
+createMobileToggle(LootTab, "Авто-лут сундуков", function(Value)
+    getgenv().IS1_Config.AutoLoot.Enabled = Value
+    if Value then
+        startAutoLoot()
+    else
+        if lootConnection then lootConnection:Disconnect() end
+    end
+end)
+
+createMobileButton(LootTab, "⚡ Быстрый лут всех", quickLootAllChests)
+
+LootTab:CreateToggle({
+    Name = "Мгновенное открытие",
     CurrentValue = true,
-    Callback = function(Value) getgenv().IS1_Config.AutoPlant.CollectSaplings = Value end
+    Callback = function(Value) getgenv().IS1_Config.AutoLoot.UseInstantOpen = Value end
 })
 
 -- 🦅 ПОЛЕТ
 local FlyTab = Window:CreateTab("🦅 Полёт")
-FlyTab:CreateToggle({
-    Name = "🦅 Включить полет",
-    CurrentValue = false,
-    Callback = function(Value)
-        getgenv().IS1_Config.FlyMode.Enabled = Value
-        toggleFlyMode(Value)
-    end
+createMobileToggle(FlyTab, "Включить полет", function(Value)
+    getgenv().IS1_Config.FlyMode.Enabled = Value
+    toggleFlyMode(Value)
+end)
+
+FlyTab:CreateSlider({
+    Name = "Скорость полета",
+    Range = {10, 200},
+    Increment = 10,
+    Suffix = "studs",
+    CurrentValue = IS_MOBILE and 40 or 50,
+    Callback = function(Value) getgenv().IS1_Config.FlyMode.Speed = Value end
 })
 
 -- 🏃 ДВИЖЕНИЕ
@@ -539,10 +765,30 @@ MoveTab:CreateSlider({
     end
 })
 
--- 🔧 АВТОВОССТАНОВЛЕНИЕ
+MoveTab:CreateToggle({
+    Name = "Ходить по небу",
+    CurrentValue = false,
+    Callback = function(Value)
+        if Value then
+            Character.HumanoidRootPart.CFrame = Character.HumanoidRootPart.CFrame + Vector3.new(0, 100, 0)
+        end
+    end
+})
+
+-- 🔧 СИСТЕМНЫЕ ФУНКЦИИ
+Players.PlayerAdded:Connect(function(player)
+    wait(2)
+    refreshPlayerList()
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    selectedPlayers[player.Name] = nil
+    refreshPlayerList()
+end)
+
 LocalPlayer.CharacterAdded:Connect(function(newChar)
     Character = newChar
-    wait(2)
+    wait(3)
     if getgenv().IS1_Config then
         Character.Humanoid.WalkSpeed = getgenv().IS1_Config.Movement.WalkSpeed or 16
     end
@@ -550,8 +796,8 @@ end)
 
 Rayfield:Notify({
     Title = "🎉 ПОЛНЫЙ СКРИПТ ЗАГРУЖЕН!",
-    Content = "Все функции активны! Автосажание с сбором саженцев!",
+    Content = "Все функции активны! Оптимизация для мобильных и ПК!",
     Duration = 6
 })
 
-print("✅ ULTIMATE COMPLETE SCRIPT LOADED!")
+print("✅ ULTIMATE COMPLETE FINAL SCRIPT LOADED!")
