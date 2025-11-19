@@ -1,5 +1,5 @@
--- 99 NIGHTS ULTIMATE MEGA HACK by I.S.-1 v7.0
--- ПОЛНЫЙ ФУНКЦИОНАЛ С ВЫБОРОМ ПРЕДМЕТОВ И ПЕРЕКЛЮЧАТЕЛЯМИ
+-- 99 NIGHTS ULTIMATE HACK by I.S.-1 v9.0
+-- ПОЛНЫЙ ФУНКЦИОНАЛ С АВТОПОСАДКОЙ И БОЕВЫМ ОРУЖИЕМ
 
 local UltimateHack = {}
 
@@ -8,7 +8,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Создаем окно
 local Window = Rayfield:CreateWindow({
-   Name = "99 NIGHTS ULTIMATE HACK v7.0",
+   Name = "99 NIGHTS ULTIMATE HACK v9.0",
    LoadingTitle = "I.S.-1 Loading...",
    ConfigurationSaving = {
       Enabled = true,
@@ -26,8 +26,9 @@ local ExploitTab = Window:CreateTab("Эксплойд", 4483362458)
 local CollectTab = Window:CreateTab("Сбор ресурсов", 4483362458)
 local OptimizationTab = Window:CreateTab("Оптимизация", 4483362458)
 local TeleportTab = Window:CreateTab("Телепортация", 4483362458)
+local PlantTab = Window:CreateTab("🌲 Автопосадка", 4483362458)
 
--- НАСТРОЙКИ (ВСЁ ВЫКЛЮЧЕНО ПО УМОЛЧАНИЮ)
+-- НАСТРОЙКИ
 UltimateHack.Settings = {
     -- ТЕЛЕПОРТАЦИЯ
     AutoTPToFire = false,
@@ -65,47 +66,41 @@ UltimateHack.Settings = {
     
     -- ОПТИМИЗАЦИЯ
     AutoOptimize = false,
+    
+    -- АВТОПОСАДКА
+    AutoPlantTrees = false,
+    PlantMode = "stack",
+    PlantRadius = 30,
+    PlantDensity = 5,
+    PlantHeight = 0,
 }
 
--- НАСТРОЙКИ СБОРА РЕСУРСОВ (ВСЁ ВКЛЮЧЕНО ДЛЯ СБОРА)
+-- НАСТРОЙКИ СБОРА РЕСУРСОВ
 UltimateHack.CollectSettings = {
-    -- РЕСУРСЫ
     Wood = true,
     Metal = true,
     Fuel = true,
     Stone = true,
-    
-    -- ИНСТРУМЕНТЫ
     Axes = true,
     Rods = true,
     Flutes = true,
     Sacks = true,
     Weapons = true,
-    
-    -- МЕДИЦИНА
     Bandages = true,
     Medkits = true,
     Potions = true,
-    
-    -- БОЕПРИПАСЫ
     Ammo = true,
     Guns = true,
-    
-    -- ЕДА
     Vegetables = true,
     Meat = true,
     Fish = true,
     CookedFood = true,
     Water = true,
-    
-    -- ПРОЧЕЕ
     Pelts = true,
     Gems = true,
     Artifacts = true,
     Currency = true,
     Miscellaneous = true,
-    
-    -- АВТОСБОР
     AutoCollect = false,
     AutoCollectInterval = 5
 }
@@ -122,32 +117,42 @@ UltimateHack.FirePosition = Vector3.new(0, 0, 0)
 UltimateHack.IsRunning = false
 UltimateHack.ChildrenNames = {"Дино малыш", "Малыш Кракен", "Малыш спрут", "Малыш коала"}
 
--- СПИСКИ ПРЕДМЕТОВ ДЛЯ КАЖДОЙ КАТЕГОРИИ
+-- СПИСКИ ПРЕДМЕТОВ
 UltimateHack.ItemLists = {
-    Wood = {"Wood", "Log", "Plank", "Stick", "Tree", "BirchLog", "OakLog", "PineLog", "Chair", "Table", "Furniture"},
-    Metal = {"Metal", "Scrap", "Iron", "Steel", "Ore", "Canister", "Tire", "Microwave", "Bolt", "Nail", "Gear"},
-    Fuel = {"Fuel", "Coal", "Oil", "Gas", "Petrol", "Diesel", "Kerosene"},
-    Stone = {"Stone", "Flint", "Rock", "Boulder", "Pebble"},
-    Axes = {"Axe", "Chainsaw", "Hatchet", "Saw"},
-    Rods = {"Rod", "FishingRod", "FishingPole"},
-    Flutes = {"Flute", "TamingFlute", "Whistle"},
+    Wood = {"Wood", "Log", "Plank", "Stick", "Tree", "BirchLog", "OakLog", "PineLog"},
+    Metal = {"Metal", "Scrap", "Iron", "Steel", "Ore", "Canister", "Tire", "Bolt", "Nail"},
+    Fuel = {"Fuel", "Coal", "Oil", "Gas", "Petrol"},
+    Stone = {"Stone", "Flint", "Rock", "Boulder"},
+    Axes = {"Axe", "Chainsaw", "Hatchet", "Spear"},
+    Rods = {"Rod", "FishingRod"},
+    Flutes = {"Flute", "TamingFlute"},
     Sacks = {"Sack", "Bag", "Backpack", "OldSack", "GoodSack"},
-    Weapons = {"Knife", "Sword", "Bow", "Arrow", "Dagger", "Blade"},
-    Bandages = {"Bandage", "Bandages", "BandageRoll"},
-    Medkits = {"Medkit", "FirstAid", "MedicalKit"},
-    Potions = {"Potion", "Heal", "HealthPotion", "HealingPotion"},
-    Ammo = {"Ammo", "Bullet", "Cartridge", "Shell", "Round"},
-    Guns = {"Gun", "Rifle", "Pistol", "Shotgun", "Revolver", "Firearm"},
-    Vegetables = {"Carrot", "Corn", "Pumpkin", "Apple", "Berry", "Tomato", "Potato", "Cabbage"},
-    Meat = {"Morsel", "Steak", "Ribs", "Meat", "RawMeat", "AnimalMeat"},
-    Fish = {"Mackerel", "Salmon", "Clownfish", "Jellyfish", "Char", "Eel", "Swordfish", "Shark", "Fish", "Trout"},
-    CookedFood = {"Stew", "Cake", "Chili", "Bread", "CookedSteak", "Roast", "Pie", "Soup"},
-    Water = {"Water", "Drink", "Bottle", "Canteen", "WaterBottle"},
-    Pelts = {"Pelt", "Fur", "Hide", "Leather", "Skin", "AnimalHide"},
-    Gems = {"Gem", "Crystal", "Diamond", "Ruby", "Emerald", "Sapphire", "Amethyst"},
-    Artifacts = {"Cultist", "Artifact", "Relic", "Treasure", "Ancient", "Antique"},
-    Currency = {"Coin", "Money", "Gold", "Silver", "Cash", "Dollar"},
-    Miscellaneous = {"Misc", "Item", "Object", "Thing", "Stuff", "Junk", "Trinket"}
+    Weapons = {"Knife", "Sword", "Bow", "Arrow", "Spear", "Kunai", "Rifle", "Shotgun", "Revolver", "Chainsaw"},
+    Bandages = {"Bandage", "Bandages"},
+    Medkits = {"Medkit", "FirstAid"},
+    Potions = {"Potion", "Heal"},
+    Ammo = {"Ammo", "Bullet", "Cartridge", "Shell"},
+    Guns = {"Gun", "Rifle", "Pistol", "Shotgun", "Revolver"},
+    Vegetables = {"Carrot", "Corn", "Pumpkin", "Apple", "Berry"},
+    Meat = {"Morsel", "Steak", "Ribs", "Meat"},
+    Fish = {"Mackerel", "Salmon", "Fish", "Trout"},
+    CookedFood = {"Stew", "Cake", "Chili", "Bread"},
+    Water = {"Water", "Drink", "Bottle"},
+    Pelts = {"Pelt", "Fur", "Hide", "Leather"},
+    Gems = {"Gem", "Crystal", "Diamond", "Ruby"},
+    Artifacts = {"Cultist", "Artifact", "Relic", "Treasure"},
+    Currency = {"Coin", "Money", "Gold", "Silver"},
+    Miscellaneous = {"Misc", "Item", "Object"}
+}
+
+-- БОЕВОЕ ОРУЖИЕ
+UltimateHack.CombatWeapons = {
+    "Kunai", "Rifle", "Shotgun", "Revolver", "Chainsaw", "Spear", "Knife", "Sword", "Bow"
+}
+
+-- ИНСТРУМЕНТЫ ДЛЯ РУБКИ
+UltimateHack.ChopTools = {
+    "Axe", "Chainsaw", "Hatchet", "Spear"
 }
 
 -- ФУНКЦИИ
@@ -377,69 +382,243 @@ function UltimateHack.Functions.Teleport.ToSpawn()
     end
 end
 
--- АУРЫ
-UltimateHack.Functions.Auras = {}
+-- РЕАЛЬНЫЙ СБОР РЕСУРСОВ
+UltimateHack.Functions.RealCollect = {}
 
-function UltimateHack.Functions.Auras.KillAura()
-    while UltimateHack.Settings.KillAura and UltimateHack.IsRunning do
-        wait(0.1)
-        local player = game.Players.LocalPlayer
-        local character = player.Character
-        
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            for _, target in pairs(game.Players:GetPlayers()) do
-                if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                    local targetChar = target.Character
-                    local distance = (character.HumanoidRootPart.Position - targetChar.HumanoidRootPart.Position).Magnitude
-                    
-                    if distance < UltimateHack.Settings.KillAuraRadius then
-                        if not (target:FindFirstChild("Status") and target.Status.Value == "Child") then
-                            if targetChar.Humanoid.Health > 0 then
-                                targetChar.Humanoid.Health = 0
-                            end
-                        end
-                    end
-                end
-            end
+function UltimateHack.Functions.RealCollect.ScanAndCollect()
+    if not UltimateHack.IsRunning then return end
+    
+    local player = game.Players.LocalPlayer
+    local character = player.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local startPos = character.HumanoidRootPart.Position
+    local collectedCount = 0
+    
+    Rayfield:Notify({
+        Title = "🔍 Поиск ресурсов",
+        Content = "Начинаю сканирование карты...",
+        Duration = 3,
+        Image = 4483362458
+    })
+    
+    local searchRadius = 500
+    local gridStep = 20
+    
+    for x = -searchRadius, searchRadius, gridStep do
+        for z = -searchRadius, searchRadius, gridStep do
+            if not UltimateHack.IsRunning then break end
             
-            for _, npc in pairs(workspace:GetDescendants()) do
-                if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") and (npc.Name:find("Wolf") or npc.Name:find("Bear") or npc.Name:find("Enemy")) then
-                    local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
-                    if distance < UltimateHack.Settings.KillAuraRadius then
-                        if npc.Humanoid.Health > 0 then
-                            npc.Humanoid.Health = 0
+            local scanPos = Vector3.new(startPos.X + x, startPos.Y + 10, startPos.Z + z)
+            
+            pcall(function()
+                character.HumanoidRootPart.CFrame = CFrame.new(scanPos)
+                wait(0.05)
+            end)
+            
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if not UltimateHack.IsRunning then break end
+                
+                if obj:IsA("BasePart") and (obj.Position - scanPos).Magnitude < 30 then
+                    local shouldCollect = false
+                    local objName = obj.Name:lower()
+                    
+                    for category, enabled in pairs(UltimateHack.CollectSettings) do
+                        if enabled and category ~= "AutoCollect" and category ~= "AutoCollectInterval" then
+                            local resources = UltimateHack.ItemLists[category]
+                            if resources then
+                                for _, resource in pairs(resources) do
+                                    if objName:find(resource:lower()) then
+                                        shouldCollect = true
+                                        break
+                                    end
+                                end
+                            end
+                            if shouldCollect then break end
                         end
                     end
-                end
-            end
-        end
-        wait(0.1)
-    end
-end
-
-function UltimateHack.Functions.Auras.TreeAura()
-    while UltimateHack.Settings.TreeAura and UltimateHack.IsRunning do
-        wait(0.2)
-        local playerChar = game.Players.LocalPlayer.Character
-        if playerChar and playerChar:FindFirstChild("HumanoidRootPart") then
-            for _, tree in pairs(workspace:GetDescendants()) do
-                if (tree.Name:find("Tree") or tree.Name:find("Wood") or tree.Name:find("Log")) and tree:IsA("BasePart") then
-                    if (playerChar.HumanoidRootPart.Position - tree.Position).Magnitude < UltimateHack.Settings.TreeAuraRadius then
+                    
+                    if shouldCollect then
                         pcall(function()
-                            tree:Destroy()
+                            character.HumanoidRootPart.CFrame = obj.CFrame
+                            wait(0.1)
+                            
+                            local tool = character:FindFirstChildOfClass("Tool")
+                            if tool then
+                                tool:Activate()
+                            end
+                            
+                            firetouchinterest(character.HumanoidRootPart, obj, 0)
+                            firetouchinterest(character.HumanoidRootPart, obj, 1)
+                            
+                            collectedCount = collectedCount + 1
                         end)
                     end
                 end
             end
         end
-        wait(0.2)
+    end
+    
+    pcall(function()
+        character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+    end)
+    
+    Rayfield:Notify({
+        Title = "✅ Сбор завершен",
+        Content = "Собрано предметов: " .. collectedCount,
+        Duration = 5,
+        Image = 4483362458
+    })
+    
+    return collectedCount
+end
+
+-- УЛУЧШЕННАЯ АУРА С БОЕВЫМ ОРУЖИЕМ
+UltimateHack.Functions.Auras = {}
+
+function UltimateHack.Functions.Auras.SmartKillAura()
+    while UltimateHack.Settings.KillAura and UltimateHack.IsRunning do
+        task.wait(0.3)
+        
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
+        
+        local weapon = nil
+        
+        for _, tool in pairs(character:GetChildren()) do
+            if tool:IsA("Tool") then
+                for _, weaponName in pairs(UltimateHack.CombatWeapons) do
+                    if tool.Name:lower():find(weaponName:lower()) then
+                        weapon = tool
+                        break
+                    end
+                end
+                if weapon then break end
+            end
+        end
+        
+        if not weapon then
+            for _, tool in pairs(player.Backpack:GetChildren()) do
+                if tool:IsA("Tool") then
+                    for _, weaponName in pairs(UltimateHack.CombatWeapons) do
+                        if tool.Name:lower():find(weaponName:lower()) then
+                            weapon = tool
+                            tool.Parent = character
+                            task.wait(0.2)
+                            break
+                        end
+                    end
+                    if weapon then break end
+                end
+            end
+        end
+        
+        if not weapon then continue end
+        
+        for _, target in pairs(game.Players:GetPlayers()) do
+            if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                local targetChar = target.Character
+                local distance = (character.HumanoidRootPart.Position - targetChar.HumanoidRootPart.Position).Magnitude
+                
+                if distance < UltimateHack.Settings.KillAuraRadius then
+                    if not (target:FindFirstChild("Status") and target.Status.Value == "Child") then
+                        if targetChar.Humanoid.Health > 0 then
+                            pcall(function()
+                                if weapon.Name:lower():find("rifle") or weapon.Name:lower():find("shotgun") or weapon.Name:lower():find("revolver") then
+                                    character.HumanoidRootPart.CFrame = CFrame.new(
+                                        character.HumanoidRootPart.Position,
+                                        targetChar.HumanoidRootPart.Position
+                                    )
+                                else
+                                    character.HumanoidRootPart.CFrame = targetChar.HumanoidRootPart.CFrame
+                                end
+                                
+                                task.wait(0.1)
+                                weapon:Activate()
+                                task.wait(0.3)
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+        
+        for _, npc in pairs(workspace:GetDescendants()) do
+            if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
+                local npcName = npc.Name:lower()
+                if npcName:find("wolf") or npcName:find("bear") or npcName:find("animal") or npcName:find("enemy") then
+                    local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
+                    if distance < UltimateHack.Settings.KillAuraRadius then
+                        if npc.Humanoid.Health > 0 then
+                            pcall(function()
+                                character.HumanoidRootPart.CFrame = npc.HumanoidRootPart.CFrame
+                                task.wait(0.1)
+                                weapon:Activate()
+                                task.wait(0.3)
+                            end)
+                        end
+                    end
+                end
+            end
+        end
     end
 end
 
-function UltimateHack.Functions.Auras.AutoFarm()
-    while UltimateHack.Settings.AutoFarmAura and UltimateHack.IsRunning do
-        wait(5)
-        UltimateHack.Functions.Collect.SelectedResources()
+function UltimateHack.Functions.Auras.SmartTreeAura()
+    while UltimateHack.Settings.TreeAura and UltimateHack.IsRunning do
+        task.wait(0.4)
+        
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
+        
+        local tool = nil
+        
+        for _, item in pairs(character:GetChildren()) do
+            if item:IsA("Tool") then
+                for _, toolName in pairs(UltimateHack.ChopTools) do
+                    if item.Name:lower():find(toolName:lower()) then
+                        tool = item
+                        break
+                    end
+                end
+                if tool then break end
+            end
+        end
+        
+        if not tool then
+            for _, item in pairs(player.Backpack:GetChildren()) do
+                if item:IsA("Tool") then
+                    for _, toolName in pairs(UltimateHack.ChopTools) do
+                        if item.Name:lower():find(toolName:lower()) then
+                            tool = item
+                            item.Parent = character
+                            task.wait(0.2)
+                            break
+                        end
+                    end
+                    if tool then break end
+                end
+            end
+        end
+        
+        if not tool then continue end
+        
+        for _, tree in pairs(workspace:GetDescendants()) do
+            if tree:IsA("BasePart") and (tree.Name:lower():find("tree") or tree.Name:lower():find("log") or tree.Name:lower():find("wood")) then
+                local distance = (character.HumanoidRootPart.Position - tree.Position).Magnitude
+                
+                if distance < UltimateHack.Settings.TreeAuraRadius then
+                    pcall(function()
+                        character.HumanoidRootPart.CFrame = tree.CFrame
+                        task.wait(0.1)
+                        tool:Activate()
+                        task.wait(0.4)
+                    end)
+                end
+            end
+        end
     end
 end
 
@@ -457,25 +636,6 @@ function UltimateHack.Functions.Automation.AutoFish()
                     fishingEvent:FireServer("StartFishing")
                 end
             end)
-        end
-    end
-end
-
-function UltimateHack.Functions.Automation.AutoPlant()
-    while UltimateHack.Settings.AutoPlant and UltimateHack.IsRunning do
-        wait(10)
-        for x = -10, 10, 3 do
-            for z = -10, 10, 3 do
-                if x == -10 or x == 10 or z == -10 or z == 10 then
-                    local plantPos = UltimateHack.FirePosition + Vector3.new(x, 0, z)
-                    pcall(function()
-                        local plantEvent = game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree")
-                        if plantEvent then
-                            plantEvent:FireServer(plantPos)
-                        end
-                    end)
-                end
-            end
         end
     end
 end
@@ -554,7 +714,7 @@ end
 -- ЧИТЫ
 UltimateHack.Functions.Cheats = {}
 
-function UltimateHack.Functions.Cheats.Fly()
+function UltimateHack.Functions.Cheats.ToggleFly()
     if UltimateHack.ActiveCheats.Fly then
         local player = game.Players.LocalPlayer
         local character = player.Character
@@ -592,7 +752,7 @@ function UltimateHack.Functions.Cheats.Fly()
     end
 end
 
-function UltimateHack.Functions.Cheats.NoClip()
+function UltimateHack.Functions.Cheats.ToggleNoClip()
     if UltimateHack.ActiveCheats.NoClip then
         local player = game.Players.LocalPlayer
         local character = player.Character
@@ -630,7 +790,7 @@ function UltimateHack.Functions.Cheats.NoClip()
     end
 end
 
-function UltimateHack.Functions.Cheats.GodMode()
+function UltimateHack.Functions.Cheats.ToggleGodMode()
     if UltimateHack.ActiveCheats.GodMode then
         local player = game.Players.LocalPlayer
         local character = player.Character
@@ -935,6 +1095,82 @@ function UltimateHack.Functions.Collect.ToggleAllResources(state)
     end
 end
 
+-- СИСТЕМА АВТОПОСАДКИ ДЕРЕВЬЕВ
+UltimateHack.Functions.Planting = {}
+
+function UltimateHack.Functions.Planting.PlantTree(position)
+    local plantEvent = game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree") or
+                      game:GetService("ReplicatedStorage"):FindFirstChild("PlantSeed") or
+                      game:GetService("ReplicatedStorage"):FindFirstChild("GrowTree")
+    
+    if plantEvent then
+        pcall(function()
+            plantEvent:FireServer(position)
+        end)
+        return true
+    end
+    return false
+end
+
+function UltimateHack.Functions.Planting.PlantStack()
+    local stackPosition = UltimateHack.FirePosition + Vector3.new(0, UltimateHack.Settings.PlantHeight, 0)
+    
+    local success = UltimateHack.Functions.Planting.PlantTree(stackPosition)
+    
+    if success then
+        UltimateHack.Settings.PlantHeight = UltimateHack.Settings.PlantHeight + 5
+        Rayfield:Notify({
+            Title = "🌲 Посадка",
+            Content = "Дерево посажено в стек! Высота: " .. UltimateHack.Settings.PlantHeight,
+            Duration = 2,
+            Image = 4483362458
+        })
+    end
+    
+    return success
+end
+
+function UltimateHack.Functions.Planting.PlantWall()
+    local radius = UltimateHack.Settings.PlantRadius
+    local density = UltimateHack.Settings.PlantDensity
+    local plantedCount = 0
+    
+    for angle = 0, 360, density do
+        if not UltimateHack.IsRunning then break end
+        
+        local x = UltimateHack.FirePosition.X + math.cos(math.rad(angle)) * radius
+        local z = UltimateHack.FirePosition.Z + math.sin(math.rad(angle)) * radius
+        local plantPos = Vector3.new(x, UltimateHack.FirePosition.Y, z)
+        
+        local success = UltimateHack.Functions.Planting.PlantTree(plantPos)
+        if success then
+            plantedCount = plantedCount + 1
+            task.wait(0.2)
+        end
+    end
+    
+    Rayfield:Notify({
+        Title = "🌲 Стена деревьев",
+        Content = "Посажено деревьев: " .. plantedCount,
+        Duration = 3,
+        Image = 4483362458
+    })
+    
+    return plantedCount > 0
+end
+
+function UltimateHack.Functions.Planting.AutoPlant()
+    while UltimateHack.Settings.AutoPlantTrees and UltimateHack.IsRunning do
+        task.wait(10)
+        
+        if UltimateHack.Settings.PlantMode == "stack" then
+            UltimateHack.Functions.Planting.PlantStack()
+        elseif UltimateHack.Settings.PlantMode == "wall" then
+            UltimateHack.Functions.Planting.PlantWall()
+        end
+    end
+end
+
 -- ЗАПУСК И ОСТАНОВКА
 function UltimateHack.StartAll()
     if UltimateHack.IsRunning then
@@ -950,20 +1186,14 @@ function UltimateHack.StartAll()
     UltimateHack.IsRunning = true
     
     if UltimateHack.Settings.KillAura then
-        spawn(function() UltimateHack.Functions.Auras.KillAura() end)
+        spawn(function() UltimateHack.Functions.Auras.SmartKillAura() end)
     end
     if UltimateHack.Settings.TreeAura then
-        spawn(function() UltimateHack.Functions.Auras.TreeAura() end)
-    end
-    if UltimateHack.Settings.AutoFarmAura then
-        spawn(function() UltimateHack.Functions.Auras.AutoFarm() end)
+        spawn(function() UltimateHack.Functions.Auras.SmartTreeAura() end)
     end
     
     if UltimateHack.Settings.AutoFish then
         spawn(function() UltimateHack.Functions.Automation.AutoFish() end)
-    end
-    if UltimateHack.Settings.AutoPlant then
-        spawn(function() UltimateHack.Functions.Automation.AutoPlant() end)
     end
     if UltimateHack.Settings.AutoLoot then
         spawn(function() UltimateHack.Functions.Automation.AutoLoot() end)
@@ -996,12 +1226,16 @@ function UltimateHack.StartAll()
         spawn(function() UltimateHack.Functions.AutoExploit.StartSpiralExploit() end)
     end
     
+    if UltimateHack.Settings.AutoPlantTrees then
+        spawn(function() UltimateHack.Functions.Planting.AutoPlant() end)
+    end
+    
     if UltimateHack.Settings.AutoOptimize then
         UltimateHack.Functions.Optimization.ApplyMobileOptimization()
     end
     
     Rayfield:Notify({
-        Title = "Ultimate Hack",
+        Title = "Ultimate Hack v9.0",
         Content = "Все системы активированы!",
         Duration = 5,
         Image = 4483362458
@@ -1017,12 +1251,12 @@ function UltimateHack.StopAll()
     UltimateHack.Settings.KillAura = false
     UltimateHack.Settings.TreeAura = false
     UltimateHack.Settings.AutoFish = false
-    UltimateHack.Settings.AutoPlant = false
     UltimateHack.Settings.AutoLoot = false
     UltimateHack.Settings.AutoFindChildren = false
     UltimateHack.Settings.AutoFarmAura = false
     UltimateHack.Settings.AutoCookFood = false
     UltimateHack.CollectSettings.AutoCollect = false
+    UltimateHack.Settings.AutoPlantTrees = false
     
     Rayfield:Notify({
         Title = "Ultimate Hack",
@@ -1102,40 +1336,28 @@ local PlayerInput = TeleportTab:CreateInput({
 })
 
 -- АУРЫ
-PlayerTab:CreateSection("Ауры")
+PlayerTab:CreateSection("⚔️ Умные ауры (БОЕВОЕ ОРУЖИЕ)")
 
 local KillAuraToggle = PlayerTab:CreateToggle({
-    Name = "⚔️ Киллаура (игроки, NPC)",
+    Name = "🔫 Киллаура (Кунаи, Винтовки, Дробовики)",
     CurrentValue = UltimateHack.Settings.KillAura,
     Flag = "KillAuraToggle",
     Callback = function(Value)
         UltimateHack.Settings.KillAura = Value
         if Value and UltimateHack.IsRunning then
-            spawn(function() UltimateHack.Functions.Auras.KillAura() end)
+            spawn(function() UltimateHack.Functions.Auras.SmartKillAura() end)
         end
     end,
 })
 
 local TreeAuraToggle = PlayerTab:CreateToggle({
-    Name = "🪓 Вырубка деревьев",
+    Name = "🪓 Рубка деревьев (Топоры, Бензопилы, Копья)",
     CurrentValue = UltimateHack.Settings.TreeAura,
     Flag = "TreeAuraToggle",
     Callback = function(Value)
         UltimateHack.Settings.TreeAura = Value
         if Value and UltimateHack.IsRunning then
-            spawn(function() UltimateHack.Functions.Auras.TreeAura() end)
-        end
-    end,
-})
-
-local AutoFarmToggle = PlayerTab:CreateToggle({
-    Name = "🌾 Автофарм",
-    CurrentValue = UltimateHack.Settings.AutoFarmAura,
-    Flag = "AutoFarmToggle",
-    Callback = function(Value)
-        UltimateHack.Settings.AutoFarmAura = Value
-        if Value and UltimateHack.IsRunning then
-            spawn(function() UltimateHack.Functions.Auras.AutoFarm() end)
+            spawn(function() UltimateHack.Functions.Auras.SmartTreeAura() end)
         end
     end,
 })
@@ -1179,7 +1401,7 @@ local FlyToggle = PlayerTab:CreateToggle({
     CurrentValue = UltimateHack.ActiveCheats.Fly,
     Flag = "FlyToggle",
     Callback = function(Value)
-        UltimateHack.Functions.Cheats.Fly()
+        UltimateHack.Functions.Cheats.ToggleFly()
     end,
 })
 
@@ -1188,7 +1410,7 @@ local NoClipToggle = PlayerTab:CreateToggle({
     CurrentValue = UltimateHack.ActiveCheats.NoClip,
     Flag = "NoClipToggle",
     Callback = function(Value)
-        UltimateHack.Functions.Cheats.NoClip()
+        UltimateHack.Functions.Cheats.ToggleNoClip()
     end,
 })
 
@@ -1197,7 +1419,7 @@ local GodModeToggle = PlayerTab:CreateToggle({
     CurrentValue = UltimateHack.ActiveCheats.GodMode,
     Flag = "GodModeToggle",
     Callback = function(Value)
-        UltimateHack.Functions.Cheats.GodMode()
+        UltimateHack.Functions.Cheats.ToggleGodMode()
     end,
 })
 
@@ -1267,18 +1489,6 @@ local AutoFishToggle = AutoTab:CreateToggle({
         UltimateHack.Settings.AutoFish = Value
         if Value and UltimateHack.IsRunning then
             spawn(function() UltimateHack.Functions.Automation.AutoFish() end)
-        end
-    end,
-})
-
-local AutoPlantToggle = AutoTab:CreateToggle({
-    Name = "🌳 Автопосадка деревьев",
-    CurrentValue = UltimateHack.Settings.AutoPlant,
-    Flag = "AutoPlantToggle",
-    Callback = function(Value)
-        UltimateHack.Settings.AutoPlant = Value
-        if Value and UltimateHack.IsRunning then
-            spawn(function() UltimateHack.Functions.Automation.AutoPlant() end)
         end
     end,
 })
@@ -1409,6 +1619,33 @@ local CollectIntervalSlider = CollectTab:CreateSlider({
     end,
 })
 
+CollectTab:CreateSection("🎯 Реальный сбор ресурсов")
+
+local RealCollectButton = CollectTab:CreateButton({
+    Name = "🔍 СКАНИРОВАТЬ И СОБРАТЬ РЕСУРСЫ ПО КАРТЕ",
+    Callback = function()
+        spawn(function()
+            UltimateHack.Functions.RealCollect.ScanAndCollect()
+        end)
+    end,
+})
+
+local AutoRealCollectToggle = CollectTab:CreateToggle({
+    Name = "🔄 Авто-сканирование карты",
+    CurrentValue = false,
+    Flag = "AutoRealCollectToggle",
+    Callback = function(Value)
+        if Value then
+            spawn(function()
+                while Value and UltimateHack.IsRunning do
+                    UltimateHack.Functions.RealCollect.ScanAndCollect()
+                    wait(UltimateHack.CollectSettings.AutoCollectInterval)
+                end
+            end)
+        end
+    end,
+})
+
 CollectTab:CreateSection("Действия")
 
 local CollectEverythingButton = CollectTab:CreateButton({
@@ -1428,7 +1665,7 @@ local CollectSelectedButton = CollectTab:CreateButton({
 -- ВЫБОР ПРЕДМЕТОВ ДЛЯ СБОРА
 CollectTab:CreateSection("📦 Ресурсы")
 CollectToggles.Wood = CollectTab:CreateToggle({
-    Name = "🪵 Дерево (Дерево, стулья, все)",
+    Name = "🪵 Дерево (Дерево, бревна, палки)",
     CurrentValue = UltimateHack.CollectSettings.Wood,
     Flag = "WoodToggle",
     Callback = function(Value)
@@ -1751,9 +1988,99 @@ local AutoOptimizeToggle = OptimizationTab:CreateToggle({
     end,
 })
 
+-- АВТОПОСАДКА
+PlantTab:CreateSection("🌲 Настройки автопосадки")
+
+local AutoPlantToggle = PlantTab:CreateToggle({
+    Name = "🔄 Автопосадка деревьев",
+    CurrentValue = UltimateHack.Settings.AutoPlantTrees,
+    Flag = "AutoPlantToggle",
+    Callback = function(Value)
+        UltimateHack.Settings.AutoPlantTrees = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Planting.AutoPlant() end)
+        end
+    end,
+})
+
+PlantTab:CreateSection("🎯 Режимы посадки")
+
+local PlantModeDropdown = PlantTab:CreateDropdown({
+    Name = "📋 Режим посадки",
+    Options = {"stack", "wall"},
+    CurrentOption = UltimateHack.Settings.PlantMode,
+    Flag = "PlantModeDropdown",
+    Callback = function(Option)
+        UltimateHack.Settings.PlantMode = Option
+        Rayfield:Notify({
+            Title = "Режим посадки",
+            Content = "Установлен режим: " .. Option,
+            Duration = 3,
+            Image = 4483362458
+        })
+    end,
+})
+
+local PlantRadiusSlider = PlantTab:CreateSlider({
+    Name = "📏 Радиус посадки (для стены)",
+    Range = {10, 100},
+    Increment = 5,
+    Suffix = "ед.",
+    CurrentValue = UltimateHack.Settings.PlantRadius,
+    Flag = "PlantRadiusSlider",
+    Callback = function(Value)
+        UltimateHack.Settings.PlantRadius = Value
+    end,
+})
+
+local PlantDensitySlider = PlantTab:CreateSlider({
+    Name = "📐 Плотность посадки (для стены)",
+    Range = {2, 20},
+    Increment = 1,
+    Suffix = "угол",
+    CurrentValue = UltimateHack.Settings.PlantDensity,
+    Flag = "PlantDensitySlider",
+    Callback = function(Value)
+        UltimateHack.Settings.PlantDensity = Value
+    end,
+})
+
+PlantTab:CreateSection("🚀 Быстрые действия")
+
+local PlantStackButton = PlantTab:CreateButton({
+    Name = "🗼 Посадить дерево в стек",
+    Callback = function()
+        spawn(function()
+            UltimateHack.Functions.Planting.PlantStack()
+        end)
+    end,
+})
+
+local PlantWallButton = PlantTab:CreateButton({
+    Name = "🛡️ Построить стену деревьев",
+    Callback = function()
+        spawn(function()
+            UltimateHack.Functions.Planting.PlantWall()
+        end)
+    end,
+})
+
+local ResetHeightButton = PlantTab:CreateButton({
+    Name = "🔄 Сбросить высоту стека",
+    Callback = function()
+        UltimateHack.Settings.PlantHeight = 0
+        Rayfield:Notify({
+            Title = "Сброс высоты",
+            Content = "Высота стека сброшена!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    end,
+})
+
 Rayfield:Notify({
-    Title = "99 Nights Ultimate Hack v7.0",
-    Content = "Успешно загружен! ВСЕ ПЕРЕКЛЮЧАТЕЛИ АКТИВНЫ!",
+    Title = "99 Nights Ultimate Hack v9.0",
+    Content = "ПОЛНЫЙ КОД ЗАГРУЖЕН! ВСЕ ФИЧИ АКТИВНЫ!",
     Duration = 6,
     Image = 4483362458
 })
