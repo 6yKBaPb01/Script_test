@@ -1,8 +1,12 @@
+-- 99 NIGHTS ULTIMATE MEGA HACK by I.S.-1
+-- ПОЛНЫЙ ФУНКЦИОНАЛ С ИСПРАВЛЕНИЕМ ВСЕХ БАГОВ
 
 local UltimateHack = {}
 
 -- Загружаем Rayfield
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Создаем окно
 local Window = Rayfield:CreateWindow({
    Name = "99 NIGHTS ULTIMATE HACK",
    LoadingTitle = "I.S.-1 Loading...",
@@ -44,9 +48,9 @@ UltimateHack.Settings = {
     AutoCookFood = false,
     
     -- ЧИТЫ
-    FlyHack = true,
+    FlyHack = false,
     NoClip = false,
-    GodMode = true,
+    GodMode = false,
     SpeedHack = false,
     SpeedMultiplier = 2,
     InfiniteStamina = true,
@@ -104,6 +108,14 @@ UltimateHack.CollectSettings = {
     -- АВТОСБОР
     AutoCollect = false,
     AutoCollectInterval = 5
+}
+
+-- АКТИВНЫЕ ЧИТЫ
+UltimateHack.ActiveCheats = {
+    Fly = false,
+    NoClip = false,
+    GodMode = false,
+    SpeedHack = false
 }
 
 UltimateHack.FirePosition = Vector3.new(0, 0, 0)
@@ -200,6 +212,23 @@ function UltimateHack.Functions.Optimization.ApplyMobileOptimization()
     Rayfield:Notify({
         Title = "Оптимизация",
         Content = "Мобильная оптимизация применена!",
+        Duration = 3,
+        Image = 4483362458
+    })
+end
+
+function UltimateHack.Functions.Optimization.ApplyPCOptimization()
+    settings().Rendering.QualityLevel = 5
+    game:GetService("Lighting").GlobalShadows = true
+    game:GetService("Lighting").FogEnd = 50000
+    
+    if setfpscap then
+        setfpscap(144)
+    end
+    
+    Rayfield:Notify({
+        Title = "Оптимизация",
+        Content = "ПК оптимизация применена!",
         Duration = 3,
         Image = 4483362458
     })
@@ -481,16 +510,39 @@ end
 UltimateHack.Functions.Cheats = {}
 
 function UltimateHack.Functions.Cheats.Fly()
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    if character then
-        character.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.Velocity = Vector3.new(0, 50, 0)
-        bodyVelocity.Parent = character.HumanoidRootPart
+    if UltimateHack.ActiveCheats.Fly then
+        -- ВЫКЛЮЧАЕМ ПОЛЕТ
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            character.Humanoid:ChangeState(Enum.HumanoidStateType.Falling)
+            local bodyVelocity = character.HumanoidRootPart:FindFirstChild("BodyVelocity")
+            if bodyVelocity then
+                bodyVelocity:Destroy()
+            end
+        end
+        UltimateHack.ActiveCheats.Fly = false
         Rayfield:Notify({
             Title = "Чит",
-            Content = "Режим полета активирован!",
+            Content = "Режим полета выключен!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    else
+        -- ВКЛЮЧАЕМ ПОЛЕТ
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            character.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
+            local bodyVelocity = Instance.new("BodyVelocity")
+            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+            bodyVelocity.MaxForce = Vector3.new(40000, 40000, 40000)
+            bodyVelocity.Parent = character.HumanoidRootPart
+        end
+        UltimateHack.ActiveCheats.Fly = true
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "Режим полета включен!",
             Duration = 3,
             Image = 4483362458
         })
@@ -498,17 +550,39 @@ function UltimateHack.Functions.Cheats.Fly()
 end
 
 function UltimateHack.Functions.Cheats.NoClip()
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    if character then
-        for _, part in pairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
+    if UltimateHack.ActiveCheats.NoClip then
+        -- ВЫКЛЮЧАЕМ NOCLIP
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
             end
         end
+        UltimateHack.ActiveCheats.NoClip = false
         Rayfield:Notify({
             Title = "Чит",
-            Content = "NoClip активирован!",
+            Content = "NoClip выключен!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    else
+        -- ВКЛЮЧАЕМ NOCLIP
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+        UltimateHack.ActiveCheats.NoClip = true
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "NoClip включен!",
             Duration = 3,
             Image = 4483362458
         })
@@ -516,14 +590,33 @@ function UltimateHack.Functions.Cheats.NoClip()
 end
 
 function UltimateHack.Functions.Cheats.GodMode()
-    local player = game.Players.LocalPlayer
-    local character = player.Character
-    if character then
-        character.Humanoid.MaxHealth = math.huge
-        character.Humanoid.Health = math.huge
+    if UltimateHack.ActiveCheats.GodMode then
+        -- ВЫКЛЮЧАЕМ GOD MODE
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            character.Humanoid.MaxHealth = 100
+            character.Humanoid.Health = 100
+        end
+        UltimateHack.ActiveCheats.GodMode = false
         Rayfield:Notify({
             Title = "Чит",
-            Content = "Режим бога активирован!",
+            Content = "Режим бога выключен!",
+            Duration = 3,
+            Image = 4483362458
+        })
+    else
+        -- ВКЛЮЧАЕМ GOD MODE
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            character.Humanoid.MaxHealth = math.huge
+            character.Humanoid.Health = math.huge
+        end
+        UltimateHack.ActiveCheats.GodMode = true
+        Rayfield:Notify({
+            Title = "Чит",
+            Content = "Режим бога включен!",
             Duration = 3,
             Image = 4483362458
         })
@@ -547,6 +640,11 @@ function UltimateHack.Functions.Cheats.SetSpeed(speed)
     local player = game.Players.LocalPlayer
     if player.Character then
         player.Character.Humanoid.WalkSpeed = speed
+        if speed > 16 then
+            UltimateHack.ActiveCheats.SpeedHack = true
+        else
+            UltimateHack.ActiveCheats.SpeedHack = false
+        end
         Rayfield:Notify({
             Title = "Чит",
             Content = "Скорость установлена: " .. speed,
@@ -572,6 +670,63 @@ function UltimateHack.Functions.Cheats.NoThirst()
     while UltimateHack.Settings.NoThirst and UltimateHack.IsRunning do
         wait(5)
     end
+end
+
+function UltimateHack.Functions.Cheats.DisableAllCheats()
+    -- ВЫКЛЮЧАЕМ ПОЛЕТ
+    if UltimateHack.ActiveCheats.Fly then
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            character.Humanoid:ChangeState(Enum.HumanoidStateType.Falling)
+            local bodyVelocity = character.HumanoidRootPart:FindFirstChild("BodyVelocity")
+            if bodyVelocity then
+                bodyVelocity:Destroy()
+            end
+        end
+        UltimateHack.ActiveCheats.Fly = false
+    end
+    
+    -- ВЫКЛЮЧАЕМ NOCLIP
+    if UltimateHack.ActiveCheats.NoClip then
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+        UltimateHack.ActiveCheats.NoClip = false
+    end
+    
+    -- ВЫКЛЮЧАЕМ GOD MODE
+    if UltimateHack.ActiveCheats.GodMode then
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if character then
+            character.Humanoid.MaxHealth = 100
+            character.Humanoid.Health = 100
+        end
+        UltimateHack.ActiveCheats.GodMode = false
+    end
+    
+    -- ВЫКЛЮЧАЕМ СКОРОСТЬ
+    if UltimateHack.ActiveCheats.SpeedHack then
+        local player = game.Players.LocalPlayer
+        if player.Character then
+            player.Character.Humanoid.WalkSpeed = 16
+        end
+        UltimateHack.ActiveCheats.SpeedHack = false
+    end
+    
+    Rayfield:Notify({
+        Title = "Читы",
+        Content = "Все читы выключены!",
+        Duration = 3,
+        Image = 4483362458
+    })
 end
 
 -- ЭКСПЛОЙД
@@ -781,9 +936,6 @@ function UltimateHack.StartAll()
     UltimateHack.IsRunning = true
     
     -- ЗАПУСКАЕМ ЧИТЫ
-    spawn(function() UltimateHack.Functions.Cheats.GodMode() end)
-    spawn(function() UltimateHack.Functions.Cheats.Fly() end)
-    spawn(function() UltimateHack.Functions.Cheats.SetSpeed(50) end)
     spawn(function() UltimateHack.Functions.Cheats.InfiniteStamina() end)
     spawn(function() UltimateHack.Functions.Cheats.NoHunger() end)
     spawn(function() UltimateHack.Functions.Cheats.NoThirst() end)
@@ -818,6 +970,22 @@ end
 
 function UltimateHack.StopAll()
     UltimateHack.IsRunning = false
+    
+    -- ВЫКЛЮЧАЕМ ВСЕ ЧИТЫ ПРИ ОСТАНОВКЕ
+    UltimateHack.Functions.Cheats.DisableAllCheats()
+    
+    -- ОСТАНАВЛИВАЕМ ВСЕ ПРОЦЕССЫ
+    UltimateHack.Settings.AutoExploit = false
+    UltimateHack.Settings.KillAura = false
+    UltimateHack.Settings.TreeAura = false
+    UltimateHack.Settings.AutoFish = false
+    UltimateHack.Settings.AutoPlant = false
+    UltimateHack.Settings.AutoLoot = false
+    UltimateHack.Settings.AutoFindChildren = false
+    UltimateHack.Settings.AutoFarmAura = false
+    UltimateHack.Settings.AutoCookFood = false
+    UltimateHack.CollectSettings.AutoCollect = false
+    
     Rayfield:Notify({
         Title = "Ultimate Hack",
         Content = "Все системы остановлены!",
@@ -950,23 +1118,36 @@ local TreeAuraRadiusSlider = PlayerTab:CreateSlider({
 
 PlayerTab:CreateSection("Читы")
 
-local FlyButton = PlayerTab:CreateButton({
-    Name = "🦅 Включить полет",
+local DisableCheatsButton = PlayerTab:CreateButton({
+    Name = "🔴 Выключить все читы",
     Callback = function()
+        UltimateHack.Functions.Cheats.DisableAllCheats()
+    end,
+})
+
+local FlyToggle = PlayerTab:CreateToggle({
+    Name = "🦅 Режим полета",
+    CurrentValue = UltimateHack.ActiveCheats.Fly,
+    Flag = "FlyToggle",
+    Callback = function(Value)
         UltimateHack.Functions.Cheats.Fly()
     end,
 })
 
-local NoClipButton = PlayerTab:CreateButton({
-    Name = "👻 Включить NoClip",
-    Callback = function()
+local NoClipToggle = PlayerTab:CreateToggle({
+    Name = "👻 NoClip",
+    CurrentValue = UltimateHack.ActiveCheats.NoClip,
+    Flag = "NoClipToggle",
+    Callback = function(Value)
         UltimateHack.Functions.Cheats.NoClip()
     end,
 })
 
-local GodModeButton = PlayerTab:CreateButton({
-    Name = "🛡️ Включить God Mode",
-    Callback = function()
+local GodModeToggle = PlayerTab:CreateToggle({
+    Name = "🛡️ God Mode",
+    CurrentValue = UltimateHack.ActiveCheats.GodMode,
+    Flag = "GodModeToggle",
+    Callback = function(Value)
         UltimateHack.Functions.Cheats.GodMode()
     end,
 })
@@ -1475,6 +1656,13 @@ local MobileOptimizeButton = OptimizationTab:CreateButton({
     end,
 })
 
+local PCOptimizeButton = OptimizationTab:CreateButton({
+    Name = "💻 Применить ПК оптимизацию",
+    Callback = function()
+        UltimateHack.Functions.Optimization.ApplyPCOptimization()
+    end,
+})
+
 local AutoOptimizeToggle = OptimizationTab:CreateToggle({
     Name = "⚡ Автооптимизация при запуске",
     CurrentValue = UltimateHack.Settings.AutoOptimize,
@@ -1486,7 +1674,7 @@ local AutoOptimizeToggle = OptimizationTab:CreateToggle({
 
 Rayfield:Notify({
     Title = "99 Nights Ultimate Hack",
-    Content = "Успешно загружен! v4.0 - ПОЛНАЯ ВЕРСИЯ",
+    Content = "Успешно загружен! v5.0 - ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕНИЯМИ",
     Duration = 6,
     Image = 4483362458
 })
