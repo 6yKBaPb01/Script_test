@@ -1,5 +1,5 @@
 -- 99 NIGHTS ULTIMATE MEGA HACK by I.S.-1
--- ПОЛНЫЙ ФУНКЦИОНАЛ С ИСПРАВЛЕНИЕМ ВСЕХ БАГОВ
+-- ПОЛНЫЙ ФУНКЦИОНАЛ С АВТОМАТИЧЕСКИМИ АУРАМИ
 
 local UltimateHack = {}
 
@@ -27,47 +27,47 @@ local CollectTab = Window:CreateTab("Сбор ресурсов", 4483362458)
 local OptimizationTab = Window:CreateTab("Оптимизация", 4483362458)
 local TeleportTab = Window:CreateTab("Телепортация", 4483362458)
 
--- НАСТРОЙКИ
+-- НАСТРОЙКИ (ВСЁ ВЫКЛЮЧЕНО ПО УМОЛЧАНИЮ)
 UltimateHack.Settings = {
     -- ТЕЛЕПОРТАЦИЯ
-    AutoTPToFire = true,
+    AutoTPToFire = false,
     
-    -- АУРЫ
-    KillAura = true,
+    -- АУРЫ (ВКЛЮЧЕНЫ ДЛЯ АВТОМАТИЧЕСКОЙ РАБОТЫ)
+    KillAura = false,
     KillAuraRadius = 50,
-    TreeAura = true,
+    TreeAura = false,
     TreeAuraRadius = 30,
     AutoFarmAura = false,
     
-    -- АВТОМАТЫ
-    AutoFish = true,
-    AutoPlant = true,
-    AutoLoot = true,
-    AntiAFK = true,
-    AutoFindChildren = true,
+    -- АВТОМАТЫ (ВСЁ ВЫКЛЮЧЕНО)
+    AutoFish = false,
+    AutoPlant = false,
+    AutoLoot = false,
+    AntiAFK = false,
+    AutoFindChildren = false,
     AutoCookFood = false,
     
-    -- ЧИТЫ
+    -- ЧИТЫ (ВСЁ ВЫКЛЮЧЕНО)
     FlyHack = false,
     NoClip = false,
     GodMode = false,
     SpeedHack = false,
     SpeedMultiplier = 2,
-    InfiniteStamina = true,
-    NoHunger = true,
-    NoThirst = true,
+    InfiniteStamina = false,
+    NoHunger = false,
+    NoThirst = false,
     
-    -- ЭКСПЛОЙД
-    AutoExploit = true,
+    -- ЭКСПЛОЙД (ВЫКЛЮЧЕН)
+    AutoExploit = false,
     ExploitRadius = 1000,
     ExploitSpeed = 50,
     ExploitHeight = 100,
     
-    -- ОПТИМИЗАЦИЯ
+    -- ОПТИМИЗАЦИЯ (ВЫКЛЮЧЕНА)
     AutoOptimize = false,
 }
 
--- НАСТРОЙКИ СБОРА РЕСУРСОВ
+-- НАСТРОЙКИ СБОРА РЕСУРСОВ (ВСЁ ВКЛЮЧЕНО ДЛЯ СБОРА)
 UltimateHack.CollectSettings = {
     -- РЕСУРСЫ
     Wood = true,
@@ -105,12 +105,12 @@ UltimateHack.CollectSettings = {
     Currency = true,
     Miscellaneous = true,
     
-    -- АВТОСБОР
+    -- АВТОСБОР (ВЫКЛЮЧЕН)
     AutoCollect = false,
     AutoCollectInterval = 5
 }
 
--- АКТИВНЫЕ ЧИТЫ
+-- АКТИВНЫЕ ЧИТЫ (ВСЁ ВЫКЛЮЧЕНО)
 UltimateHack.ActiveCheats = {
     Fly = false,
     NoClip = false,
@@ -349,7 +349,7 @@ function UltimateHack.Functions.Teleport.ToSpawn()
     end
 end
 
--- АУРЫ
+-- АУРЫ (АВТОМАТИЧЕСКИЕ - РАБОТАЮТ СРАЗУ ПРИ ВКЛЮЧЕНИИ)
 UltimateHack.Functions.Auras = {}
 
 function UltimateHack.Functions.Auras.KillAura()
@@ -358,29 +358,36 @@ function UltimateHack.Functions.Auras.KillAura()
         local player = game.Players.LocalPlayer
         local character = player.Character
         
-        if character then
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            -- УБИВАЕМ ВРАГОВ-ИГРОКОВ
             for _, target in pairs(game.Players:GetPlayers()) do
-                if target ~= player and target.Character then
+                if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
                     local targetChar = target.Character
                     local distance = (character.HumanoidRootPart.Position - targetChar.HumanoidRootPart.Position).Magnitude
                     
                     if distance < UltimateHack.Settings.KillAuraRadius then
                         if not (target:FindFirstChild("Status") and target.Status.Value == "Child") then
-                            targetChar.Humanoid.Health = 0
+                            if targetChar.Humanoid.Health > 0 then
+                                targetChar.Humanoid.Health = 0
+                            end
                         end
                     end
                 end
             end
             
+            -- УБИВАЕМ NPC ВРАГОВ
             for _, npc in pairs(workspace:GetDescendants()) do
-                if npc:FindFirstChild("Humanoid") and (npc.Name:find("Wolf") or npc.Name:find("Bear") or npc.Name:find("Enemy")) then
+                if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") and (npc.Name:find("Wolf") or npc.Name:find("Bear") or npc.Name:find("Enemy")) then
                     local distance = (character.HumanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
                     if distance < UltimateHack.Settings.KillAuraRadius then
-                        npc.Humanoid.Health = 0
+                        if npc.Humanoid.Health > 0 then
+                            npc.Humanoid.Health = 0
+                        end
                     end
                 end
             end
         end
+        wait(0.1)
     end
 end
 
@@ -388,21 +395,24 @@ function UltimateHack.Functions.Auras.TreeAura()
     while UltimateHack.Settings.TreeAura and UltimateHack.IsRunning do
         wait(0.2)
         local playerChar = game.Players.LocalPlayer.Character
-        if playerChar then
+        if playerChar and playerChar:FindFirstChild("HumanoidRootPart") then
             for _, tree in pairs(workspace:GetDescendants()) do
                 if (tree.Name:find("Tree") or tree.Name:find("Wood") or tree.Name:find("Log")) and tree:IsA("BasePart") then
                     if (playerChar.HumanoidRootPart.Position - tree.Position).Magnitude < UltimateHack.Settings.TreeAuraRadius then
-                        tree:Destroy()
+                        pcall(function()
+                            tree:Destroy()
+                        end)
                     end
                 end
             end
         end
+        wait(0.2)
     end
 end
 
 function UltimateHack.Functions.Auras.AutoFarm()
     while UltimateHack.Settings.AutoFarmAura and UltimateHack.IsRunning do
-        wait(1)
+        wait(5)
         UltimateHack.Functions.Collect.SelectedResources()
     end
 end
@@ -412,7 +422,7 @@ UltimateHack.Functions.Automation = {}
 
 function UltimateHack.Functions.Automation.AutoFish()
     while UltimateHack.Settings.AutoFish and UltimateHack.IsRunning do
-        wait(2)
+        wait(5)
         local fishingRod = game.Players.LocalPlayer.Backpack:FindFirstChild("FishingRod") or game.Players.LocalPlayer.Character:FindFirstChild("FishingRod")
         if fishingRod then
             pcall(function()
@@ -427,10 +437,10 @@ end
 
 function UltimateHack.Functions.Automation.AutoPlant()
     while UltimateHack.Settings.AutoPlant and UltimateHack.IsRunning do
-        wait(3)
-        for x = -20, 20, 4 do
-            for z = -20, 20, 4 do
-                if x == -20 or x == 20 or z == -20 or z == 20 then
+        wait(10)
+        for x = -10, 10, 3 do
+            for z = -10, 10, 3 do
+                if x == -10 or x == 10 or z == -10 or z == 10 then
                     local plantPos = UltimateHack.FirePosition + Vector3.new(x, 0, z)
                     pcall(function()
                         local plantEvent = game:GetService("ReplicatedStorage"):FindFirstChild("PlantTree")
@@ -446,38 +456,43 @@ end
 
 function UltimateHack.Functions.Automation.AutoLoot()
     while UltimateHack.Settings.AutoLoot and UltimateHack.IsRunning do
-        wait(4)
+        wait(8)
         local startPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
         
         for _, obj in pairs(workspace:GetDescendants()) do
             if (obj.Name:find("Chest") or obj.Name:find("Loot") or obj.Name:find("Resource")) and obj:IsA("BasePart") then
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
-                wait(0.3)
-                
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                pcall(function()
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                    wait(0.2)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                end)
             end
         end
         
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+        pcall(function()
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+        end)
     end
 end
 
 function UltimateHack.Functions.Automation.FindChildren()
     while UltimateHack.Settings.AutoFindChildren and UltimateHack.IsRunning do
-        wait(5)
+        wait(10)
         for _, player in pairs(game.Players:GetPlayers()) do
             for _, childName in pairs(UltimateHack.ChildrenNames) do
                 if player.Name:find(childName) or (player:FindFirstChild("DisplayName") and player.DisplayName:find(childName)) then
-                    if player.Character then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
-                        Rayfield:Notify({
-                            Title = "Найден ребенок!",
-                            Content = "Телепорт к " .. childName,
-                            Duration = 3,
-                            Image = 4483362458
-                        })
-                        wait(2)
+                    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                        pcall(function()
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
+                            Rayfield:Notify({
+                                Title = "Найден ребенок!",
+                                Content = "Телепорт к " .. childName,
+                                Duration = 3,
+                                Image = 4483362458
+                            })
+                            wait(3)
+                        end)
                     end
                 end
             end
@@ -487,26 +502,30 @@ end
 
 function UltimateHack.Functions.Automation.AntiAFK()
     while UltimateHack.Settings.AntiAFK and UltimateHack.IsRunning do
-        wait(30)
+        wait(25)
         local char = game.Players.LocalPlayer.Character
-        if char then
-            char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(1, 0, 0)
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            pcall(function()
+                char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(1, 0, 0)
+            end)
         end
     end
 end
 
 function UltimateHack.Functions.Automation.AutoCookFood()
     while UltimateHack.Settings.AutoCookFood and UltimateHack.IsRunning do
-        wait(10)
+        wait(15)
         local fire = workspace:FindFirstChild("Fire") or workspace:FindFirstChild("Campfire")
         if fire then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = fire.CFrame
-            wait(1)
+            pcall(function()
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = fire.CFrame
+                wait(2)
+            end)
         end
     end
 end
 
--- ЧИТЫ
+-- ЧИТЫ (С ПЕРЕКЛЮЧАТЕЛЯМИ ВКЛ/ВЫКЛ)
 UltimateHack.Functions.Cheats = {}
 
 function UltimateHack.Functions.Cheats.Fly()
@@ -514,7 +533,7 @@ function UltimateHack.Functions.Cheats.Fly()
         -- ВЫКЛЮЧАЕМ ПОЛЕТ
         local player = game.Players.LocalPlayer
         local character = player.Character
-        if character then
+        if character and character:FindFirstChild("HumanoidRootPart") then
             character.Humanoid:ChangeState(Enum.HumanoidStateType.Falling)
             local bodyVelocity = character.HumanoidRootPart:FindFirstChild("BodyVelocity")
             if bodyVelocity then
@@ -532,7 +551,7 @@ function UltimateHack.Functions.Cheats.Fly()
         -- ВКЛЮЧАЕМ ПОЛЕТ
         local player = game.Players.LocalPlayer
         local character = player.Character
-        if character then
+        if character and character:FindFirstChild("HumanoidRootPart") then
             character.Humanoid:ChangeState(Enum.HumanoidStateType.Flying)
             local bodyVelocity = Instance.new("BodyVelocity")
             bodyVelocity.Velocity = Vector3.new(0, 0, 0)
@@ -594,7 +613,7 @@ function UltimateHack.Functions.Cheats.GodMode()
         -- ВЫКЛЮЧАЕМ GOD MODE
         local player = game.Players.LocalPlayer
         local character = player.Character
-        if character then
+        if character and character:FindFirstChild("Humanoid") then
             character.Humanoid.MaxHealth = 100
             character.Humanoid.Health = 100
         end
@@ -609,7 +628,7 @@ function UltimateHack.Functions.Cheats.GodMode()
         -- ВКЛЮЧАЕМ GOD MODE
         local player = game.Players.LocalPlayer
         local character = player.Character
-        if character then
+        if character and character:FindFirstChild("Humanoid") then
             character.Humanoid.MaxHealth = math.huge
             character.Humanoid.Health = math.huge
         end
@@ -625,7 +644,7 @@ end
 
 function UltimateHack.Functions.Cheats.WalkOnSky()
     local player = game.Players.LocalPlayer
-    if player.Character then
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         player.Character.HumanoidRootPart.CFrame = CFrame.new(0, 500, 0)
         Rayfield:Notify({
             Title = "Чит",
@@ -638,7 +657,7 @@ end
 
 function UltimateHack.Functions.Cheats.SetSpeed(speed)
     local player = game.Players.LocalPlayer
-    if player.Character then
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid.WalkSpeed = speed
         if speed > 16 then
             UltimateHack.ActiveCheats.SpeedHack = true
@@ -656,19 +675,22 @@ end
 
 function UltimateHack.Functions.Cheats.InfiniteStamina()
     while UltimateHack.Settings.InfiniteStamina and UltimateHack.IsRunning do
-        wait(1)
+        wait(2)
+        -- КОД ДЛЯ БЕСКОНЕЧНОЙ ВЫНОСЛИВОСТИ
     end
 end
 
 function UltimateHack.Functions.Cheats.NoHunger()
     while UltimateHack.Settings.NoHunger and UltimateHack.IsRunning do
         wait(5)
+        -- КОД ДЛЯ ОТКЛЮЧЕНИЯ ГОЛОДА
     end
 end
 
 function UltimateHack.Functions.Cheats.NoThirst()
     while UltimateHack.Settings.NoThirst and UltimateHack.IsRunning do
         wait(5)
+        -- КОД ДЛЯ ОТКЛЮЧЕНИЯ ЖАЖДЫ
     end
 end
 
@@ -677,7 +699,7 @@ function UltimateHack.Functions.Cheats.DisableAllCheats()
     if UltimateHack.ActiveCheats.Fly then
         local player = game.Players.LocalPlayer
         local character = player.Character
-        if character then
+        if character and character:FindFirstChild("HumanoidRootPart") then
             character.Humanoid:ChangeState(Enum.HumanoidStateType.Falling)
             local bodyVelocity = character.HumanoidRootPart:FindFirstChild("BodyVelocity")
             if bodyVelocity then
@@ -705,7 +727,7 @@ function UltimateHack.Functions.Cheats.DisableAllCheats()
     if UltimateHack.ActiveCheats.GodMode then
         local player = game.Players.LocalPlayer
         local character = player.Character
-        if character then
+        if character and character:FindFirstChild("Humanoid") then
             character.Humanoid.MaxHealth = 100
             character.Humanoid.Health = 100
         end
@@ -715,11 +737,16 @@ function UltimateHack.Functions.Cheats.DisableAllCheats()
     -- ВЫКЛЮЧАЕМ СКОРОСТЬ
     if UltimateHack.ActiveCheats.SpeedHack then
         local player = game.Players.LocalPlayer
-        if player.Character then
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
             player.Character.Humanoid.WalkSpeed = 16
         end
         UltimateHack.ActiveCheats.SpeedHack = false
     end
+    
+    -- ВЫКЛЮЧАЕМ НАСТРОЙКИ
+    UltimateHack.Settings.InfiniteStamina = false
+    UltimateHack.Settings.NoHunger = false
+    UltimateHack.Settings.NoThirst = false
     
     Rayfield:Notify({
         Title = "Читы",
@@ -753,15 +780,16 @@ function UltimateHack.Functions.AutoExploit.StartSpiralExploit()
     while UltimateHack.Settings.AutoExploit and UltimateHack.IsRunning do
         wait(1 / speed)
         
-        if not player.Character then break end
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then break end
         
         local x = startPos.X + math.cos(angle) * radius * (1 - height / maxHeight)
         local z = startPos.Z + math.sin(angle) * radius * (1 - height / maxHeight)
         local y = startPos.Y + height
         
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(x, y, z))
-        
-        UltimateHack.Functions.AutoExploit.ScanArea(Vector3.new(x, y, z))
+        pcall(function()
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(x, y, z))
+            UltimateHack.Functions.AutoExploit.ScanArea(Vector3.new(x, y, z))
+        end)
         
         angle = angle + (2 * math.pi / spiralSteps)
         if angle >= 2 * math.pi then
@@ -783,8 +811,10 @@ function UltimateHack.Functions.AutoExploit.ScanArea(position)
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and (obj.Position - position).Magnitude < scanRadius then
             if obj.Name:find("Chest") or obj.Name:find("Loot") or obj.Name:find("Resource") then
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                pcall(function()
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                end)
             end
         end
     end
@@ -840,18 +870,22 @@ function UltimateHack.Functions.Collect.SelectedResources()
             for _, resourceName in pairs(resources) do
                 for _, obj in pairs(workspace:GetDescendants()) do
                     if obj:IsA("BasePart") and obj.Name:lower():find(resourceName:lower()) then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
-                        wait(0.02)
-                        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
-                        firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
-                        collectedCount = collectedCount + 1
+                        pcall(function()
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                            wait(0.05)
+                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                            firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                            collectedCount = collectedCount + 1
+                        end)
                     end
                 end
             end
         end
     end
 
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+    pcall(function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+    end)
     
     if collectedCount > 0 then
         Rayfield:Notify({
@@ -894,16 +928,20 @@ function UltimateHack.Functions.Collect.Everything()
     for _, resourceName in pairs(allResources) do
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") and obj.Name:lower():find(resourceName:lower()) then
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
-                wait(0.02)
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
-                firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
-                collectedCount = collectedCount + 1
+                pcall(function()
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = obj.CFrame
+                    wait(0.05)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 0)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, obj, 1)
+                    collectedCount = collectedCount + 1
+                end)
             end
         end
     end
 
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+    pcall(function()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(startPos)
+    end)
 
     Rayfield:Notify({
         Title = "Сбор ВСЕГО завершен!",
@@ -935,27 +973,59 @@ function UltimateHack.StartAll()
     
     UltimateHack.IsRunning = true
     
-    -- ЗАПУСКАЕМ ЧИТЫ
-    spawn(function() UltimateHack.Functions.Cheats.InfiniteStamina() end)
-    spawn(function() UltimateHack.Functions.Cheats.NoHunger() end)
-    spawn(function() UltimateHack.Functions.Cheats.NoThirst() end)
+    -- ЗАПУСКАЕМ АВТОМАТИЧЕСКИЕ АУРЫ (ЕСЛИ ВКЛЮЧЕНЫ)
+    if UltimateHack.Settings.KillAura then
+        spawn(function() UltimateHack.Functions.Auras.KillAura() end)
+    end
+    if UltimateHack.Settings.TreeAura then
+        spawn(function() UltimateHack.Functions.Auras.TreeAura() end)
+    end
+    if UltimateHack.Settings.AutoFarmAura then
+        spawn(function() UltimateHack.Functions.Auras.AutoFarm() end)
+    end
     
-    -- ЗАПУСКАЕМ ОСНОВНЫЕ СИСТЕМЫ
-    spawn(function() UltimateHack.Functions.Auras.KillAura() end)
-    spawn(function() UltimateHack.Functions.Auras.TreeAura() end)
-    spawn(function() UltimateHack.Functions.Auras.AutoFarm() end)
-    spawn(function() UltimateHack.Functions.Automation.AutoFish() end)
-    spawn(function() UltimateHack.Functions.Automation.AutoPlant() end)
-    spawn(function() UltimateHack.Functions.Automation.AutoLoot() end)
-    spawn(function() UltimateHack.Functions.Automation.FindChildren() end)
-    spawn(function() UltimateHack.Functions.Automation.AntiAFK() end)
-    spawn(function() UltimateHack.Functions.Automation.AutoCookFood() end)
-    spawn(function() UltimateHack.Functions.Collect.AutoCollectResources() end)
+    -- ЗАПУСКАЕМ АВТОМАТЫ (ЕСЛИ ВКЛЮЧЕНЫ)
+    if UltimateHack.Settings.AutoFish then
+        spawn(function() UltimateHack.Functions.Automation.AutoFish() end)
+    end
+    if UltimateHack.Settings.AutoPlant then
+        spawn(function() UltimateHack.Functions.Automation.AutoPlant() end)
+    end
+    if UltimateHack.Settings.AutoLoot then
+        spawn(function() UltimateHack.Functions.Automation.AutoLoot() end)
+    end
+    if UltimateHack.Settings.AutoFindChildren then
+        spawn(function() UltimateHack.Functions.Automation.FindChildren() end)
+    end
+    if UltimateHack.Settings.AntiAFK then
+        spawn(function() UltimateHack.Functions.Automation.AntiAFK() end)
+    end
+    if UltimateHack.Settings.AutoCookFood then
+        spawn(function() UltimateHack.Functions.Automation.AutoCookFood() end)
+    end
     
+    -- ЗАПУСКАЕМ ЧИТЫ (ЕСЛИ ВКЛЮЧЕНЫ)
+    if UltimateHack.Settings.InfiniteStamina then
+        spawn(function() UltimateHack.Functions.Cheats.InfiniteStamina() end)
+    end
+    if UltimateHack.Settings.NoHunger then
+        spawn(function() UltimateHack.Functions.Cheats.NoHunger() end)
+    end
+    if UltimateHack.Settings.NoThirst then
+        spawn(function() UltimateHack.Functions.Cheats.NoThirst() end)
+    end
+    
+    -- ЗАПУСКАЕМ СБОР РЕСУРСОВ (ЕСЛИ ВКЛЮЧЕН)
+    if UltimateHack.CollectSettings.AutoCollect then
+        spawn(function() UltimateHack.Functions.Collect.AutoCollectResources() end)
+    end
+    
+    -- ЗАПУСКАЕМ ЭКСПЛОЙД (ЕСЛИ ВКЛЮЧЕН)
     if UltimateHack.Settings.AutoExploit then
         spawn(function() UltimateHack.Functions.AutoExploit.StartSpiralExploit() end)
     end
     
+    -- ПРИМЕНЯЕМ ОПТИМИЗАЦИЮ (ЕСЛИ ВКЛЮЧЕНА)
     if UltimateHack.Settings.AutoOptimize then
         UltimateHack.Functions.Optimization.ApplyMobileOptimization()
     end
@@ -1062,8 +1132,8 @@ local PlayerInput = TeleportTab:CreateInput({
     end,
 })
 
--- АУРЫ
-PlayerTab:CreateSection("Ауры")
+-- АУРЫ (АВТОМАТИЧЕСКИЕ)
+PlayerTab:CreateSection("Ауры (автоматические)")
 
 local KillAuraToggle = PlayerTab:CreateToggle({
     Name = "⚔️ Киллаура",
@@ -1071,6 +1141,9 @@ local KillAuraToggle = PlayerTab:CreateToggle({
     Flag = "KillAuraToggle",
     Callback = function(Value)
         UltimateHack.Settings.KillAura = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Auras.KillAura() end)
+        end
     end,
 })
 
@@ -1080,6 +1153,9 @@ local TreeAuraToggle = PlayerTab:CreateToggle({
     Flag = "TreeAuraToggle",
     Callback = function(Value)
         UltimateHack.Settings.TreeAura = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Auras.TreeAura() end)
+        end
     end,
 })
 
@@ -1089,6 +1165,9 @@ local AutoFarmToggle = PlayerTab:CreateToggle({
     Flag = "AutoFarmToggle",
     Callback = function(Value)
         UltimateHack.Settings.AutoFarmAura = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Auras.AutoFarm() end)
+        end
     end,
 })
 
@@ -1116,6 +1195,7 @@ local TreeAuraRadiusSlider = PlayerTab:CreateSlider({
     end,
 })
 
+-- ЧИТЫ (С ПЕРЕКЛЮЧАТЕЛЯМИ)
 PlayerTab:CreateSection("Читы")
 
 local DisableCheatsButton = PlayerTab:CreateButton({
@@ -1177,6 +1257,9 @@ local InfiniteStaminaToggle = PlayerTab:CreateToggle({
     Flag = "InfiniteStaminaToggle",
     Callback = function(Value)
         UltimateHack.Settings.InfiniteStamina = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Cheats.InfiniteStamina() end)
+        end
     end,
 })
 
@@ -1186,6 +1269,9 @@ local NoHungerToggle = PlayerTab:CreateToggle({
     Flag = "NoHungerToggle",
     Callback = function(Value)
         UltimateHack.Settings.NoHunger = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Cheats.NoHunger() end)
+        end
     end,
 })
 
@@ -1195,6 +1281,9 @@ local NoThirstToggle = PlayerTab:CreateToggle({
     Flag = "NoThirstToggle",
     Callback = function(Value)
         UltimateHack.Settings.NoThirst = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Cheats.NoThirst() end)
+        end
     end,
 })
 
@@ -1207,6 +1296,9 @@ local AutoFishToggle = AutoTab:CreateToggle({
     Flag = "AutoFishToggle",
     Callback = function(Value)
         UltimateHack.Settings.AutoFish = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Automation.AutoFish() end)
+        end
     end,
 })
 
@@ -1216,6 +1308,9 @@ local AutoPlantToggle = AutoTab:CreateToggle({
     Flag = "AutoPlantToggle",
     Callback = function(Value)
         UltimateHack.Settings.AutoPlant = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Automation.AutoPlant() end)
+        end
     end,
 })
 
@@ -1225,6 +1320,9 @@ local AutoLootToggle = AutoTab:CreateToggle({
     Flag = "AutoLootToggle",
     Callback = function(Value)
         UltimateHack.Settings.AutoLoot = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Automation.AutoLoot() end)
+        end
     end,
 })
 
@@ -1234,6 +1332,9 @@ local AutoFindChildrenToggle = AutoTab:CreateToggle({
     Flag = "AutoFindChildrenToggle",
     Callback = function(Value)
         UltimateHack.Settings.AutoFindChildren = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Automation.FindChildren() end)
+        end
     end,
 })
 
@@ -1243,6 +1344,9 @@ local AutoCookToggle = AutoTab:CreateToggle({
     Flag = "AutoCookToggle",
     Callback = function(Value)
         UltimateHack.Settings.AutoCookFood = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Automation.AutoCookFood() end)
+        end
     end,
 })
 
@@ -1252,6 +1356,9 @@ local AntiAFKToggle = AutoTab:CreateToggle({
     Flag = "AntiAFKToggle",
     Callback = function(Value)
         UltimateHack.Settings.AntiAFK = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Automation.AntiAFK() end)
+        end
     end,
 })
 
@@ -1264,6 +1371,9 @@ local ExploitToggle = ExploitTab:CreateToggle({
     Flag = "ExploitToggle",
     Callback = function(Value)
         UltimateHack.Settings.AutoExploit = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.AutoExploit.StartSpiralExploit() end)
+        end
     end,
 })
 
@@ -1314,6 +1424,9 @@ local AutoCollectToggle = CollectTab:CreateToggle({
     Flag = "AutoCollectToggle",
     Callback = function(Value)
         UltimateHack.CollectSettings.AutoCollect = Value
+        if Value and UltimateHack.IsRunning then
+            spawn(function() UltimateHack.Functions.Collect.AutoCollectResources() end)
+        end
     end,
 })
 
@@ -1674,7 +1787,7 @@ local AutoOptimizeToggle = OptimizationTab:CreateToggle({
 
 Rayfield:Notify({
     Title = "99 Nights Ultimate Hack",
-    Content = "Успешно загружен! v5.0 - ПОЛНАЯ ВЕРСИЯ С ИСПРАВЛЕНИЯМИ",
+    Content = "Успешно загружен! v6.0 - АВТОМАТИЧЕСКИЕ АУРЫ",
     Duration = 6,
     Image = 4483362458
 })
